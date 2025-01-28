@@ -1,4 +1,4 @@
-import { VStack, Heading, Button } from '@chakra-ui/react';
+import { Heading, Box, Table } from '@chakra-ui/react';
 import useSWR from 'swr';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -10,14 +10,25 @@ function Comments() {
   if (!data) return <div>loading...</div>;
 
   return (
-    <VStack>
-      <Heading size="lg">Comments</Heading>
-      {data.map((comment) => (
-        <Button key={comment.id} variant="outline" colorScheme="blue">
-          {comment.name}
-        </Button>
-      ))}
-    </VStack>
+    <>
+      <Heading size="lg" mb={4}>Comments</Heading>
+      <Box maxH="500px" overflowY="auto">
+        <Table.Root>
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeader>Name</Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {data.map((comment, index) => (
+              <Table.Row key={index}>
+                <Table.Cell>{comment.name}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      </Box>
+    </>
   );
 }
 
