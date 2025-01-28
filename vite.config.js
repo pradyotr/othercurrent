@@ -14,9 +14,9 @@ export default defineConfig({
     },
 
     manifest: {
-      name: 'test-pwa',
-      short_name: 'test-pwa',
-      description: 'test-pwa',
+      name: 'uniquelabels gatepass pwa',
+      short_name: 'ul-gp-pwa',
+      description: 'gatepass pwa for uniquelabels',
       theme_color: '#ffffff',
     },
 
