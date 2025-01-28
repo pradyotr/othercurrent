@@ -1,12 +1,11 @@
-import { Button } from "./components/ui/button"
-import { HStack } from "@chakra-ui/react"
+import Comments from "./pages/comments";
 
 const App = () => {
   return (
-    <HStack>
-      <Button>Click me</Button>
-      <Button>Click me</Button>
-    </HStack>
-  )
-}
-export default App
+    <Routes>
+      <Route path="/" element={<Comments />} />
+    </Routes>
+  );
+};
+
+export default App;
