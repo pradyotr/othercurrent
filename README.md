@@ -6,6 +6,6 @@
 https://bun.sh/docs/installation
 
 ### Install packages
-bun install
+`bun install`
 ### Run dev server
-bun run dev
+`bun run dev`
