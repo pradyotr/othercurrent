@@ -25,7 +25,10 @@ function Login() {
     >
       <Box
         as="form"
-        onSubmit={() => login(username, password)}
+        onSubmit={(e) => {
+          e.preventDefault();
+          login(username, password)
+        }}
         w={{ base: "4/5" }}
         maxW="400px"
         bg="gray.50"
