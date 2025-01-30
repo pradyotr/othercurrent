@@ -17,7 +17,7 @@ function Login() {
 
   return (
     <Box
-      h={{ base: "full" }}
+      h={{ base: "4/5" }}
       w="100vw"
       display="flex"
       alignItems="center"
