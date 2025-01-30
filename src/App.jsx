@@ -1,10 +1,12 @@
 import { Routes, Route } from "react-router-dom";
-import Comments from "./pages/comments";
+import Login from "./pages/login";
+import Home from "./pages/home";
 
 const App = () => {
   return (
     <Routes>
-      <Route path="/" element={<Comments />} />
+      <Route exact path="/login" element={<Login />} />
+      <Route path="/" element={<Home />} />
     </Routes>
   );
 };
