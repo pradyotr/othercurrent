@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: react-bun-pwa
+    env: node
+    buildCommand: bun install && bun run build
+    startCommand: bun run start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: BUN_VERSION
+        value: 1.0.7
+    healthCheckPath: /
+    autoDeploy: true
+
+buildCommand: bun install && bun run build
