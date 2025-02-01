@@ -1,17 +1,15 @@
 {
   "name": "uniquelabels-gatepass-pwa",
   "build": {
-      "dockerfile": "Dockerfile",
-      "args": {
-          "VARIANT": "1.2.0"
-      }
+    "dockerfile": "Dockerfile",
+    "args": {
+      "VARIANT": "1.2.0"
+    }
   },
   "forwardPorts": [5173],
   "customizations": {
-      "vscode": {
-          "extensions": [
-              "dbaeumer.vscode-eslint"
-          ]
-      }
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint"]
+    }
   }
 }

@@ -1,23 +1,23 @@
-import { useEffect, useState } from "react";
-import { Box, Input, Button, VStack, Heading } from "@chakra-ui/react";
-import { useNavigate } from "react-router";
-import { PasswordInput } from "../components/ui/password-input";
-import { useColorMode } from "../components/ui/color-mode";
-import { useAuth } from "../hooks/useAuth";
+import { useEffect, useState } from 'react'
+import { Box, Input, Button, VStack, Heading } from '@chakra-ui/react'
+import { useNavigate } from 'react-router'
+import { PasswordInput } from '../components/ui/password-input'
+import { useColorMode } from '../components/ui/color-mode'
+import { useAuth } from '../hooks/useAuth'
 
 function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const navigate = useNavigate()
+  const { login, isAuthenticated } = useAuth()
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/");
-  }, [isAuthenticated]);
+    if (isAuthenticated) navigate('/')
+  }, [isAuthenticated])
 
   return (
     <Box
-      h={{ base: "4/5" }}
+      h={{ base: '4/5' }}
       w="100vw"
       display="flex"
       alignItems="center"
@@ -26,14 +26,14 @@ function Login() {
       <Box
         as="form"
         onSubmit={(e) => {
-          e.preventDefault();
+          e.preventDefault()
           login(username, password)
         }}
-        w={{ base: "4/5" }}
+        w={{ base: '4/5' }}
         maxW="400px"
         bg="gray.50"
         rounded="lg"
-        background={useColorMode("white", "gray.800")}
+        background={useColorMode('white', 'gray.800')}
       >
         <VStack spacing="4" align="center">
           <Heading size="2xl" p="4">
@@ -53,7 +53,7 @@ function Login() {
             placeholder="Password"
             variant="subtle"
             value={password}
-            color={useColorMode("gray.800", "white")}
+            color={useColorMode('gray.800', 'white')}
             onChange={(e) => setPassword(e.target.value)}
             w="full"
             h="12"
@@ -65,7 +65,7 @@ function Login() {
         </VStack>
       </Box>
     </Box>
-  );
+  )
 }
 
-export default Login;
+export default Login

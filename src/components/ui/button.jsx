@@ -2,12 +2,12 @@ import {
   AbsoluteCenter,
   Button as ChakraButton,
   Span,
-  Spinner,
-} from "@chakra-ui/react";
-import * as React from "react";
+  Spinner
+} from '@chakra-ui/react'
+import * as React from 'react'
 
 export const Button = React.forwardRef(function Button(props, ref) {
-  const { loading, disabled, loadingText, children, ...rest } = props;
+  const { loading, disabled, loadingText, children, ...rest } = props
   return (
     <ChakraButton disabled={loading || disabled} ref={ref} {...rest}>
       {loading && !loadingText ? (
@@ -26,5 +26,5 @@ export const Button = React.forwardRef(function Button(props, ref) {
         children
       )}
     </ChakraButton>
-  );
-});
+  )
+})
