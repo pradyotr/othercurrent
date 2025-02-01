@@ -6,6 +6,7 @@
           "VARIANT": "1.2.0"
       }
   },
+  "forwardPorts": [5173],
   "customizations": {
       "vscode": {
           "extensions": [

@@ -11,5 +11,5 @@ RUN apt-get update \
     && apt-get clean -y \
     && chsh -s $(which bash) bun \
     && echo 'export PS1="\e[01;32m\u\e[m:\e[01;34m\w\e[m\$ "' >> /home/bun/.bashrc
-
+EXPOSE 5173
 USER bun
