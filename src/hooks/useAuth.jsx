@@ -8,16 +8,18 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [roles, setRoles] = useState(null)
   const navigate = useNavigate()
   useEffect(() => {
     checkAuthStatus()
   }, [])
 
-  const checkAuthStatus = () => {
+  const checkAuthStatus = async () => {
     const token = localStorage.getItem('token')
     if (token) {
       setIsAuthenticated(true)
-      fetchUserData(token)
+      const logged_user = await fetchUserData(token)
+      fetchUserRoles(logged_user, token)
       navigate('/')
     } else {
       setIsAuthenticated(false)
@@ -29,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   const fetchUserData = async (token) => {
     try {
       const response = await fetch(
-        `${BASE_URL}/method/frappe.auth.get_logged_user"`,
+        `${BASE_URL}/method/frappe.auth.get_logged_user`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -38,6 +40,22 @@ export const AuthProvider = ({ children }) => {
       )
       const userData = await response.json()
       setUser(userData.message)
+      return userData.message
+    } catch (error) {
+      console.error('Error fetching user data:', error)
+      logout()
+    }
+  }
+
+  const fetchUserRoles = async (user, token) => {
+    try {
+      const response = await fetch(`${BASE_URL}/resource/User/${user}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      const userData = await response.json()
+      setRoles(userData.data.roles.map((field) => field.role))
     } catch (error) {
       console.error('Error fetching user data:', error)
       logout()
@@ -88,7 +106,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user, loading, login, logout }}
+      value={{ isAuthenticated, user, loading, roles, login, logout }}
     >
       {children}
     </AuthContext.Provider>
