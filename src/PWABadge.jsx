@@ -1,33 +1,33 @@
-import "./PWABadge.css";
+import './PWABadge.css'
 
-import { useRegisterSW } from "virtual:pwa-register/react";
+import { useRegisterSW } from 'virtual:pwa-register/react'
 
 function PWABadge() {
   // check for updates every hour
-  const period = 60 * 60 * 1000;
+  const period = 60 * 60 * 1000
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
+    updateServiceWorker
   } = useRegisterSW({
     onRegisteredSW(swUrl, r) {
-      if (period <= 0) return;
-      if (r?.active?.state === "activated") {
-        registerPeriodicSync(period, swUrl, r);
+      if (period <= 0) return
+      if (r?.active?.state === 'activated') {
+        registerPeriodicSync(period, swUrl, r)
       } else if (r?.installing) {
-        r.installing.addEventListener("statechange", (e) => {
+        r.installing.addEventListener('statechange', (e) => {
           /** @type {ServiceWorker} */
-          const sw = e.target;
-          if (sw.state === "activated") registerPeriodicSync(period, swUrl, r);
-        });
+          const sw = e.target
+          if (sw.state === 'activated') registerPeriodicSync(period, swUrl, r)
+        })
       }
-    },
-  });
+    }
+  })
 
   function close() {
-    setOfflineReady(false);
-    setNeedRefresh(false);
+    setOfflineReady(false)
+    setNeedRefresh(false)
   }
 
   return (
@@ -59,10 +59,10 @@ function PWABadge() {
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default PWABadge;
+export default PWABadge
 
 /**
  * This function will register a periodic sync check every hour, you can modify the interval as needed.
@@ -71,19 +71,19 @@ export default PWABadge;
  * @param r {ServiceWorkerRegistration}
  */
 function registerPeriodicSync(period, swUrl, r) {
-  if (period <= 0) return;
+  if (period <= 0) return
 
   setInterval(async () => {
-    if ("onLine" in navigator && !navigator.onLine) return;
+    if ('onLine' in navigator && !navigator.onLine) return
 
     const resp = await fetch(swUrl, {
-      cache: "no-store",
+      cache: 'no-store',
       headers: {
-        cache: "no-store",
-        "cache-control": "no-cache",
-      },
-    });
+        cache: 'no-store',
+        'cache-control': 'no-cache'
+      }
+    })
 
-    if (resp?.status === 200) await r.update();
-  }, period);
+    if (resp?.status === 200) await r.update()
+  }, period)
 }
