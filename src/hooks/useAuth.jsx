@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import { useNavigate } from "react-router";
+import { BASE_URL } from '../constants/app-constants';
 
 const AuthContext = createContext(null);
 
@@ -28,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   const fetchUserData = async (token) => {
     try {
       const response = await fetch(
-        "https://uniquelabels.zodak.org/api/method/frappe.auth.get_logged_user",
+        `${BASE_URL}/method/frappe.auth.get_logged_user"`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await fetch(
-        "https://uniquelabels.zodak.org/api/method/frappe.integrations.oauth2.get_token",
+        `${BASE_URL}/method/frappe.integrations.oauth2.get_token`,
         {
           method: "POST",
           headers: {
