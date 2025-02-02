@@ -15,16 +15,27 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     const token = localStorage.getItem('token')
-    if (token) {
-      setIsAuthenticated(true)
-      const logged_user = await fetchUserData(token)
-      fetchUserRoles(logged_user, token)
-      navigate('/')
-    } else {
-      setIsAuthenticated(false)
-      setUser(null)
+    try {
+      if (token) {
+        setIsAuthenticated(true)
+        const logged_user = await fetchUserData(token)
+        const response = await fetch(`${BASE_URL}/resource/User/${logged_user}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        const userData = await response.json()
+        setUser({ username: logged_user, roles: userData.data.roles.map((field) => field.role) })
+        navigate('/')
+      } else {
+        setIsAuthenticated(false)
+        setUser(null)
+      }
+      setLoading(false)
+    } catch (error) {
+      console.error('Error fetching user data:', error)
+      logout()
     }
-    setLoading(false)
   }
 
   const fetchUserData = async (token) => {
@@ -38,23 +49,7 @@ export const AuthProvider = ({ children }) => {
         }
       )
       const userData = await response.json()
-      setUser({"username": userData.message})
       return userData.message
-    } catch (error) {
-      console.error('Error fetching user data:', error)
-      logout()
-    }
-  }
-
-  const fetchUserRoles = async (user, token) => {
-    try {
-      const response = await fetch(`${BASE_URL}/resource/User/${user}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      const userData = await response.json()
-      setUser({ ...user, roles: userData.data.roles.map((field) => field.role) })
     } catch (error) {
       console.error('Error fetching user data:', error)
       logout()
