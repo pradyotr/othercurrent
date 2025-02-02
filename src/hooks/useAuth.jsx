@@ -6,9 +6,8 @@ const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState({})
   const [loading, setLoading] = useState(true)
-  const [roles, setRoles] = useState(null)
   const navigate = useNavigate()
   useEffect(() => {
     checkAuthStatus()
@@ -39,7 +38,7 @@ export const AuthProvider = ({ children }) => {
         }
       )
       const userData = await response.json()
-      setUser(userData.message)
+      setUser({"username": userData.message})
       return userData.message
     } catch (error) {
       console.error('Error fetching user data:', error)
@@ -55,7 +54,7 @@ export const AuthProvider = ({ children }) => {
         }
       })
       const userData = await response.json()
-      setRoles(userData.data.roles.map((field) => field.role))
+      setUser({ ...user, roles: userData.data.roles.map((field) => field.role) })
     } catch (error) {
       console.error('Error fetching user data:', error)
       logout()
@@ -106,7 +105,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user, loading, roles, login, logout }}
+      value={{ isAuthenticated, user, loading, login, logout }}
     >
       {children}
     </AuthContext.Provider>
