@@ -6,30 +6,42 @@ const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState({})
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   useEffect(() => {
     checkAuthStatus()
   }, [])
 
-  const checkAuthStatus = () => {
+  const checkAuthStatus = async () => {
     const token = localStorage.getItem('token')
-    if (token) {
-      setIsAuthenticated(true)
-      fetchUserData(token)
-      navigate('/')
-    } else {
-      setIsAuthenticated(false)
-      setUser(null)
+    try {
+      if (token) {
+        setIsAuthenticated(true)
+        const logged_user = await fetchUserData(token)
+        const response = await fetch(`${BASE_URL}/resource/User/${logged_user}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        const userData = await response.json()
+        setUser({ username: logged_user, roles: userData.data.roles.map((field) => field.role) })
+        navigate('/')
+      } else {
+        setIsAuthenticated(false)
+        setUser(null)
+      }
+      setLoading(false)
+    } catch (error) {
+      console.error('Error fetching user data:', error)
+      logout()
     }
-    setLoading(false)
   }
 
   const fetchUserData = async (token) => {
     try {
       const response = await fetch(
-        `${BASE_URL}/method/frappe.auth.get_logged_user"`,
+        `${BASE_URL}/method/frappe.auth.get_logged_user`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -37,7 +49,7 @@ export const AuthProvider = ({ children }) => {
         }
       )
       const userData = await response.json()
-      setUser(userData.message)
+      return userData.message
     } catch (error) {
       console.error('Error fetching user data:', error)
       logout()
