@@ -26,7 +26,7 @@ function Login() {
         bg="white"
         zIndex="5"
       >
-        <Image src="/src/assets/Logo_Unique_Lables.jpg" height="100px"/>
+        <Image src="/src/assets/Logo_Unique_Lables.jpg" height="100px" />
       </Box>
       <Box
         h={{ base: '4/5' }}

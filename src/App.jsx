@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Login from './pages/login'
 import Home from './pages/home'
 import Orders from './pages/orders'
+import './config/fetch-interceptor'
 
 const App = () => {
   return (
