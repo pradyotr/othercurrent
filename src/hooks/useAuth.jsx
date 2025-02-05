@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
         })
         const userData = await response.json()
         setUser({ username: logged_user, roles: userData.data.roles.map((field) => field.role) })
-        navigate('/')
+        // navigate('/')
       } else {
         setIsAuthenticated(false)
         setUser(null)
