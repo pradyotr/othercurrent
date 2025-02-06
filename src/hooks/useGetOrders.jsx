@@ -1,7 +1,7 @@
 import { BASE_URL } from '../constants/app-constants'
 import useSWR from 'swr'
 
-const useFetch = (type, sortOrder = true) => {
+const useGetOrders = (type, sortOrder = true) => {
   const fetcher = (url) => fetch(url).then((res) => res.json())
   const { data, error, isLoading } = useSWR(
     type
@@ -13,4 +13,4 @@ const useFetch = (type, sortOrder = true) => {
   return { data, isLoading }
 }
 
-export default useFetch
+export default useGetOrders;

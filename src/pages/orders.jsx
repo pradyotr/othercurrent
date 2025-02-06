@@ -12,13 +12,13 @@ import {
 import { BiSolidDownArrow, BiSolidUpArrow } from 'react-icons/bi'
 import { useAuth } from '../hooks/useAuth'
 import { debounce } from 'lodash'
-import useFetch from '../hooks/useFetch'
+import useGetOrders from '../hooks/useGetOrders'
 export default function Orders() {
   const { type } = useParams()
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [sortOrder, setSortOrder] = useState(true)
-  const { data, isLoading } = useFetch(type, sortOrder)
+  const { data, isLoading } = useGetOrders(type, sortOrder)
 
   const [filteredData, setFilteredData] = useState([])
   const [searchString, setSearchString] = useState('')

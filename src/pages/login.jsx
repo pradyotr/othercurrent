@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { PasswordInput } from '../components/ui/password-input'
 import { useColorMode } from '../components/ui/color-mode'
 import { useAuth } from '../hooks/useAuth'
+import logo from '/src/assets/Logo_Unique_Lables.jpg'
 
 function Login() {
   const [username, setUsername] = useState('')
@@ -26,7 +27,7 @@ function Login() {
         bg="white"
         zIndex="5"
       >
-        <Image src="/src/assets/Logo_Unique_Lables.jpg" height="100px" />
+        <Image src={logo} height="100px" />
       </Box>
       <Box
         h={{ base: '4/5' }}
