@@ -1,5 +1,4 @@
 import { useState, useEffect, createContext, useContext } from 'react'
-import { useNavigate } from 'react-router'
 import { BASE_URL } from '../constants/app-constants'
 
 const AuthContext = createContext(null)
@@ -8,7 +7,6 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState({})
   const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
   useEffect(() => {
     checkAuthStatus()
   }, [])
@@ -19,14 +17,19 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         setIsAuthenticated(true)
         const logged_user = await fetchUserData(token)
-        const response = await fetch(`${BASE_URL}/resource/User/${logged_user}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
+        const response = await fetch(
+          `${BASE_URL}/resource/User/${logged_user}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        })
+        )
         const userData = await response.json()
-        setUser({ username: logged_user, roles: userData.data.roles.map((field) => field.role) })
-        navigate('/')
+        setUser({
+          username: logged_user,
+          roles: userData.data.roles.map((field) => field.role)
+        })
       } else {
         setIsAuthenticated(false)
         setUser(null)
