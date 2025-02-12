@@ -6,6 +6,7 @@ import {
   Center,
   HStack,
   Input,
+  Link,
   Stack,
   Table
 } from '@chakra-ui/react'
@@ -100,7 +101,14 @@ export default function Orders() {
               {filteredData.map((row, i) => {
                 return (
                   <Table.Row key={row.name}>
-                    <Table.Cell>{row.name}</Table.Cell>
+                    <Table.Cell>
+                      <Link
+                        variant="underline"
+                        href={`/${type}?name=${row.name}`}
+                      >
+                        {row.name}
+                      </Link>
+                    </Table.Cell>
                     <Table.Cell>
                       {type === 'in' ? row.supplier_name : row.customer_name}
                     </Table.Cell>

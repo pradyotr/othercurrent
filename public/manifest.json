@@ -1,0 +1,17 @@
+{
+  "short_name": "UL Gatepass",
+  "name": "UniqueLabels Gatepass",
+  "icons": [
+    {
+      "src": "/src/assets/icon_512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/src/assets/icon_1024.png",
+      "type": "image/png",
+      "sizes": "1024x1024"
+    }
+  ],
+  "start_url": "/login"
+}
