@@ -14,43 +14,62 @@ import useFetch from '../hooks/useFetch'
 import { useForm } from 'react-hook-form'
 import { BASE_URL } from '../constants/app-constants'
 import { useState } from 'react'
+import { isEmpty } from 'lodash'
+import useSWR from 'swr'
 
 export default function PartyDetailsTab({ type, docname }) {
   const fields =
     type === 'in'
       ? ['name', 'transaction_date', 'supplier', 'billing_address_display']
       : ['name', 'posting_date', 'customer', 'address_display']
-  const { data, error, isLoading } = useFetch(
+  const { fetchedData, fetchError, isLoading } = useFetch(
     type === 'in' ? `Purchase Order` : `Sales Invoice`,
     fields,
     [['name', '=', docname]]
   )
-  const [response, setResponse] = useState({})
+  const fetcher = (url) => fetch(url).then((res) => res.json())
+  const { data, error, mutate } = useSWR(
+    `${BASE_URL}/resource/Gate Pass?fields=["*"]&filters=[["linked_document", "=", "${docname}"]]&order_by=creation desc`,
+    fetcher
+  )
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors }
   } = useForm()
 
   const postData = async (body) => {
     try {
-      body = {
-        ...body,
-        gate_pass_type: type === 'in' ? 'Inward' : 'Outward',
-        linked_to: type === 'in' ? 'Purchase Order' : 'Sales Invoice',
-        linked_document: data?.data[0].name || '',
-        linked_document_date:
-          type === 'in'
-            ? data?.data[0]?.transaction_date
-            : data?.data[0]?.posting_date
+      if (data?.data?.length > 0) {
+        Object.entries(body).map((entry, i) => {
+          if (entry[1] === data.data[0][entry[0]]) {
+            delete body[entry[0]]
+          }
+        })
+      } else {
+        body = {
+          ...body,
+          gate_pass_type: type === 'in' ? 'Inward' : 'Outward',
+          linked_to: type === 'in' ? 'Purchase Order' : 'Sales Invoice',
+          linked_document: fetchedData.data[0].name || '',
+          linked_document_date:
+            type === 'in'
+              ? fetchedData.data[0]?.transaction_date
+              : fetchedData.data[0]?.posting_date
+        }
       }
-      const response = await fetch(`${BASE_URL}/resource/Gate Pass`, {
-        method: 'POST',
+      const url = `${BASE_URL}/resource/Gate Pass${data?.data?.length > 0 ? `/${data?.data[0].name}` : ``}`
+      if (isEmpty(body)) {
+        throw 'No changes in document'
+      }
+      const response = await fetch(url, {
+        method: data?.data?.length > 0 ? 'PUT' : 'POST',
         body: JSON.stringify(body)
       })
       const resBody = await response.json()
-      setResponse(resBody)
+      mutate(resBody)
     } catch (error) {
       console.error('Failed to post data', error)
     }
@@ -72,15 +91,15 @@ export default function PartyDetailsTab({ type, docname }) {
               <Highlight query="PO No:" styles={{ fontWeight: 'bold' }}>
                 PO No:
               </Highlight>
-              {data?.data[0]?.name}
+              {fetchedData.data[0]?.name}
             </Text>
             <Text>
               <Highlight query="Dated:" styles={{ fontWeight: 'bold' }}>
                 Dated:
               </Highlight>
               {type == 'in'
-                ? data?.data[0]?.transaction_date
-                : data?.data[0]?.posting_date}
+                ? fetchedData.data[0]?.transaction_date
+                : fetchedData.data[0]?.posting_date}
             </Text>
           </HStack>
           <Field.Root>
@@ -89,7 +108,9 @@ export default function PartyDetailsTab({ type, docname }) {
               {...register(type == 'in' ? 'supplier' : 'customer')}
               disabled
               defaultValue={
-                type == 'in' ? data?.data[0]?.supplier : data?.data[0]?.customer
+                type == 'in'
+                  ? fetchedData.data[0]?.supplier
+                  : fetchedData.data[0]?.customer
               }
             />
           </Field.Root>
@@ -106,11 +127,10 @@ export default function PartyDetailsTab({ type, docname }) {
               maxH="10lh"
               defaultValue={
                 type == 'in'
-                  ? String(data?.data[0]?.billing_address_display).replaceAll(
-                      '<br>',
-                      '\n'
-                    )
-                  : String(data?.data[0]?.address_display).replaceAll(
+                  ? String(
+                      fetchedData.data[0]?.billing_address_display
+                    ).replaceAll('<br>', '\n')
+                  : String(fetchedData.data[0]?.address_display).replaceAll(
                       '<br>',
                       '\n'
                     )
@@ -126,7 +146,11 @@ export default function PartyDetailsTab({ type, docname }) {
                 type == 'in' ? 'supplier_invoice_no' : 'invoice_no',
                 { required: true }
               )}
-              defaultValue={type == 'out' ? data?.data[0]?.name : ''}
+              defaultValue={
+                type == 'out'
+                  ? fetchedData.data[0]?.name
+                  : data?.data[0]?.supplier_invoice_no || ''
+              }
               placeholder="Enter input here"
             />
           </Field.Root>
@@ -139,7 +163,11 @@ export default function PartyDetailsTab({ type, docname }) {
                 type == 'in' ? 'supplier_invoice_date' : 'invoice_date',
                 { required: true }
               )}
-              defaultValue={type == 'out' ? data?.data[0]?.posting_date : ''}
+              defaultValue={
+                type == 'out'
+                  ? fetchedData.data[0]?.posting_date
+                  : data?.data[0]?.supplier_invoice_date || ''
+              }
               type="date"
             />
           </Field.Root>

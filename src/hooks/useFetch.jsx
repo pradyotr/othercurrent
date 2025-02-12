@@ -12,7 +12,7 @@ const useFetch = (
     `${BASE_URL}/resource/${doctype}?fields=${JSON.stringify(fields)}${filters ? `&filters=${JSON.stringify(filters)}` : ``}&order_by=${order_by}`,
     fetcher
   )
-  return { data, error, isLoading }
+  return { fetchedData: data, fetchError: error, isLoading }
 }
 
 export default useFetch
