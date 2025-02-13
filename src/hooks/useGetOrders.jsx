@@ -5,7 +5,7 @@ const useGetOrders = (type, sortOrder = true) => {
   const fetcher = (url) => fetch(url).then((res) => res.json())
   const { data, error, isLoading } = useSWR(
     type
-      ? `${BASE_URL}/resource/${type === 'in' ? `Purchase Order` : `Sales Invoice`}?fields=["*"]&order_by=creation ${sortOrder ? `desc` : `asc`}&limit_page_length=None`
+      ? `${BASE_URL}/resource/${type === 'in' ? `Purchase Order` : `Sales Invoice`}?fields=["name", "${type === 'in' ? `supplier` : `customer`}_name"]&order_by=creation ${sortOrder ? `desc` : `asc`}&limit_page_length=None`
       : null,
     fetcher
   )
@@ -13,4 +13,4 @@ const useGetOrders = (type, sortOrder = true) => {
   return { data, isLoading }
 }
 
-export default useGetOrders;
+export default useGetOrders
