@@ -37,6 +37,7 @@ export default function OrderDetails() {
     fetcher
   )
   const [showAlert, setShowAlert] = useState()
+  const [submitErrors, setSubmitErrors] = useState([])
 
   if (isLoading) {
     return <div>Loading data...</div>
@@ -87,7 +88,8 @@ export default function OrderDetails() {
       })
       const resBody = await response.json()
       if (resBody.data && resBody.data?.name) docname = resBody.data.name
-
+      if(response.status != 200) setSubmitErrors([...submitErrors, {'type': response.status, 'message': resBody.exception || resBody._server_messages || ''}])
+      
       const filesTob64 = filesToUpload.map((file) =>
         getBase64(file[1][0]).then((response) => response)
       )
@@ -112,12 +114,15 @@ export default function OrderDetails() {
         }).then((response) => response.json())
       )
       const fileUploadStatus = await Promise.all(uploadFiles)
+      if(fileUploadStatus.find(response => !response.data || !response.data?.name)) setSubmitErrors([...submitErrors, {'type': 'FileUploadError'}])
 
       mutate(resBody)
     } catch (error) {
       console.error('Failed to post data', error)
+      setSubmitErrors([...submitErrors, {'type': 'PostError'}])
     }
   }
+
   return (
     <>
       {activeTab === 'party_details' && (
@@ -128,6 +133,7 @@ export default function OrderDetails() {
           fetchedData={fetchedData}
           data={data}
           postData={postData}
+          submitErrors={submitErrors}
         />
       )}
       {activeTab === 'images' && (
@@ -136,6 +142,7 @@ export default function OrderDetails() {
           showAlert={showAlert}
           setShowAlert={setShowAlert}
           postData={postData}
+          submitErrors={submitErrors}
         />
       )}
       <Tabs.Root

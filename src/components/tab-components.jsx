@@ -25,7 +25,7 @@ import { BASE_URL } from '../constants/app-constants'
 import { useEffect, useState } from 'react'
 import { isEmpty } from 'lodash'
 import useSWR from 'swr'
-import { HiCamera, HiCheckCircle } from 'react-icons/hi'
+import { HiCamera, HiCheckCircle, HiExclamationCircle } from 'react-icons/hi'
 
 export default function PartyDetailsTab({
   type,
@@ -33,15 +33,17 @@ export default function PartyDetailsTab({
   data,
   postData,
   showAlert,
-  setShowAlert
+  setShowAlert,
+  submitErrors
 }) {
   const {
     register,
     handleSubmit,
     watch,
+    setError,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm()
-
+  
   return (
     <>
       <FormStatusAlert
@@ -49,6 +51,7 @@ export default function PartyDetailsTab({
         isSubmitSuccessful={isSubmitSuccessful}
         showAlert={showAlert}
         setShowAlert={setShowAlert}
+        submitErrors={submitErrors}
       />
       <Box w="100vw" display="flex" alignItems="center" justifyContent="center">
         <form onSubmit={handleSubmit((data) => postData(data))}>
@@ -155,7 +158,7 @@ export default function PartyDetailsTab({
   )
 }
 
-export function ImagesTab({ data, postData, showAlert, setShowAlert }) {
+export function ImagesTab({ data, postData, showAlert, setShowAlert, submitErrors }) {
   const {
     register,
     handleSubmit,
@@ -173,6 +176,7 @@ export function ImagesTab({ data, postData, showAlert, setShowAlert }) {
         isSubmitSuccessful={isSubmitSuccessful}
         showAlert={showAlert}
         setShowAlert={setShowAlert}
+        submitErrors={submitErrors}
       />
       <Box w="100vw" display="flex" alignItems="center" justifyContent="center">
         <form onSubmit={handleSubmit((data) => postData(data))}>
@@ -230,7 +234,6 @@ export function ImagesTab({ data, postData, showAlert, setShowAlert }) {
                   <Field.Label>Add Image</Field.Label>
                   <FileUploadRoot
                     {...register(`image-${index}`)}
-                    onFileAccept={(details) => console.log(details)}
                     capture="environment"
                   >
                     <FileUploadTrigger asChild>
@@ -271,27 +274,27 @@ function FormStatusAlert({
   isSubmitting,
   isSubmitSuccessful,
   showAlert,
-  setShowAlert
+  setShowAlert,
+  submitErrors
 }) {
+  const alertObject = RenderAlert(isSubmitting, isSubmitSuccessful, submitErrors, showAlert)
   return (
     <>
-      {isSubmitting || (isSubmitSuccessful && showAlert) ? (
+      {alertObject?.showCondition ? (
         <Alert.Root
           borderStartWidth="3px"
           w="100vw"
           display="flex"
           alignItems="center"
-          status={isSubmitting ? 'info' : 'success'}
+          status={alertObject?.status}
           borderStartColor="colorPalette.600"
-          title={isSubmitting ? 'Submitting Data' : 'Successfully submitted'}
+          title={alertObject?.message}
         >
           <Alert.Indicator>
-            {isSubmitting ? <Spinner size="sm" /> : <HiCheckCircle />}
+            {alertObject?.icon}
           </Alert.Indicator>
           <Alert.Title>
-            {isSubmitting
-              ? 'Submitting data, please wait...'
-              : 'Successfully submitted'}
+            {alertObject?.message}
           </Alert.Title>
           <CloseButton onClick={() => setShowAlert(false)} />
         </Alert.Root>
@@ -300,4 +303,32 @@ function FormStatusAlert({
       )}
     </>
   )
+}
+
+function RenderAlert(isSubmitting, isSubmitSuccessful, submitErrors, showAlert)  {
+  if(isSubmitting)  {
+    return {
+      showCondition: true,
+      status: 'info',
+      message: 'Submitting data, please wait...',
+      icon: <Spinner size="sm" />
+    }
+  }
+  if(submitErrors && submitErrors.length && showAlert)  {
+    return {
+      showCondition: true,
+      status: 'error',
+      message: 'Error occured while submitting, please retry.',
+      icon: <HiExclamationCircle />
+    }
+  }
+  if(isSubmitSuccessful && showAlert) {
+    return {
+      showCondition: true,
+      status: 'success',
+      message: 'Successfully submitted',
+      icon: <HiCheckCircle />
+    }
+  }
+  return null
 }
