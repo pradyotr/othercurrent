@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react'
 import { isEmpty } from 'lodash'
 import useSWR from 'swr'
 import { HiCamera, HiCheckCircle, HiExclamationCircle } from 'react-icons/hi'
+import { NavLink } from 'react-router'
 
 export default function PartyDetailsTab({
   type,
@@ -43,7 +44,7 @@ export default function PartyDetailsTab({
     setError,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm()
-  
+
   return (
     <>
       <FormStatusAlert
@@ -158,7 +159,13 @@ export default function PartyDetailsTab({
   )
 }
 
-export function ImagesTab({ data, postData, showAlert, setShowAlert, submitErrors }) {
+export function ImagesTab({
+  data,
+  postData,
+  showAlert,
+  setShowAlert,
+  submitErrors
+}) {
   const {
     register,
     handleSubmit,
@@ -185,11 +192,15 @@ export function ImagesTab({ data, postData, showAlert, setShowAlert, submitError
             <Field.Root orientation="horizontal">
               <Field.Label>Image of Vehicle</Field.Label>
               {data && data.data.length && data.data[0].vehicle_image ? (
-                <Image
-                  h="100px"
-                  w="100px"
-                  src={`${img_url}${data.data[0].vehicle_image}`}
-                />
+                <NavLink
+                  to={`${BASE_URL.slice(0, BASE_URL.length - 3)}${data.data[0].vehicle_image}`}
+                >
+                  <Image
+                    h="100px"
+                    w="100px"
+                    src={`${img_url}${data.data[0].vehicle_image}`}
+                  />
+                </NavLink>
               ) : (
                 <></>
               )}
@@ -208,11 +219,15 @@ export function ImagesTab({ data, postData, showAlert, setShowAlert, submitError
             <Field.Root orientation="horizontal">
               <Field.Label>Image of Material</Field.Label>
               {data && data.data.length && data.data[0].material_image ? (
-                <Image
-                  h="100px"
-                  w="100px"
-                  src={`${img_url}${data.data[0].material_image}`}
-                />
+                <NavLink
+                  to={`${BASE_URL.slice(0, BASE_URL.length - 3)}${data.data[0].material_image}`}
+                >
+                  <Image
+                    h="100px"
+                    w="100px"
+                    src={`${img_url}${data.data[0].material_image}`}
+                  />
+                </NavLink>
               ) : (
                 <></>
               )}
@@ -270,6 +285,83 @@ export function ImagesTab({ data, postData, showAlert, setShowAlert, submitError
   )
 }
 
+export function DocumentsTab({
+  data,
+  postData,
+  showAlert,
+  setShowAlert,
+  submitErrors
+}) {
+  const [documents, setDocuments] = useState([])
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting, isSubmitSuccessful }
+  } = useForm()
+
+  return (
+    <>
+      <FormStatusAlert
+        isSubmitting={isSubmitting}
+        isSubmitSuccessful={isSubmitSuccessful}
+        showAlert={showAlert}
+        setShowAlert={setShowAlert}
+        submitErrors={submitErrors}
+      />
+      <Box w="100vw" display="flex" alignItems="center" justifyContent="center">
+        <form onSubmit={handleSubmit((data) => postData(data))}>
+          <VStack gap="6" align="center">
+            <Heading size="xl">Attach Documents</Heading>
+            <Text>You can attach as many documents as needed</Text>
+            {documents.map((index) => {
+              return (
+                <Field.Root
+                  unstyled="true"
+                  key={index}
+                  display="flex"
+                  justifyItems="center"
+                >
+                  <Field.Label>Add Image</Field.Label>
+                  <FileUploadRoot
+                    {...register(`image-${index}`)}
+                    capture="environment"
+                  >
+                    <FileUploadTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <HiCamera /> Capture
+                      </Button>
+                    </FileUploadTrigger>
+                    <FileUploadList />
+                  </FileUploadRoot>
+                </Field.Root>
+              )
+            })}
+            <Box display="flex" justifyContent="center">
+              <Button
+                onClick={() =>
+                  setDocuments([...documents, documents.length + 1])
+                }
+                color="black/80"
+                rounded="md"
+                borderColor="black/30"
+              >
+                + Attach images
+              </Button>
+            </Box>
+            <Box display="flex" justifyContent="center">
+              <Button type="submit" color="white" bg="black">
+                Confirm
+              </Button>
+            </Box>
+          </VStack>
+        </form>
+      </Box>
+    </>
+  )
+}
+
 function FormStatusAlert({
   isSubmitting,
   isSubmitSuccessful,
@@ -277,7 +369,12 @@ function FormStatusAlert({
   setShowAlert,
   submitErrors
 }) {
-  const alertObject = RenderAlert(isSubmitting, isSubmitSuccessful, submitErrors, showAlert)
+  const alertObject = RenderAlert(
+    isSubmitting,
+    isSubmitSuccessful,
+    submitErrors,
+    showAlert
+  )
   return (
     <>
       {alertObject?.showCondition ? (
@@ -290,12 +387,8 @@ function FormStatusAlert({
           borderStartColor="colorPalette.600"
           title={alertObject?.message}
         >
-          <Alert.Indicator>
-            {alertObject?.icon}
-          </Alert.Indicator>
-          <Alert.Title>
-            {alertObject?.message}
-          </Alert.Title>
+          <Alert.Indicator>{alertObject?.icon}</Alert.Indicator>
+          <Alert.Title>{alertObject?.message}</Alert.Title>
           <CloseButton onClick={() => setShowAlert(false)} />
         </Alert.Root>
       ) : (
@@ -305,8 +398,13 @@ function FormStatusAlert({
   )
 }
 
-function RenderAlert(isSubmitting, isSubmitSuccessful, submitErrors, showAlert)  {
-  if(isSubmitting)  {
+function RenderAlert(
+  isSubmitting,
+  isSubmitSuccessful,
+  submitErrors,
+  showAlert
+) {
+  if (isSubmitting) {
     return {
       showCondition: true,
       status: 'info',
@@ -314,7 +412,7 @@ function RenderAlert(isSubmitting, isSubmitSuccessful, submitErrors, showAlert) 
       icon: <Spinner size="sm" />
     }
   }
-  if(submitErrors && submitErrors.length && showAlert)  {
+  if (submitErrors && submitErrors.length && showAlert) {
     return {
       showCondition: true,
       status: 'error',
@@ -322,7 +420,7 @@ function RenderAlert(isSubmitting, isSubmitSuccessful, submitErrors, showAlert) 
       icon: <HiExclamationCircle />
     }
   }
-  if(isSubmitSuccessful && showAlert) {
+  if (isSubmitSuccessful && showAlert) {
     return {
       showCondition: true,
       status: 'success',

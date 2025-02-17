@@ -7,9 +7,13 @@ import {
   HiCamera,
   HiTruck,
   HiClipboardList,
-  HiCheckCircle
+  HiCheckCircle,
+  HiFolderAdd
 } from 'react-icons/hi'
-import PartyDetailsTab, { ImagesTab } from '../components/tab-components'
+import PartyDetailsTab, {
+  DocumentsTab,
+  ImagesTab
+} from '../components/tab-components'
 import useSWR from 'swr'
 import { BASE_URL } from '../constants/app-constants'
 import useFetch from '../hooks/useFetch'
@@ -67,7 +71,7 @@ export default function OrderDetails() {
       } else {
         body = {
           ...body,
-          gate_pass_type: type === 'in' ? 'Inward' : 'Outward',
+          gate_pass_type: type === 'in' ? 'IN' : 'OUT',
           linked_to: type === 'in' ? 'Purchase Order' : 'Sales Invoice',
           linked_document: query.get('name'),
           linked_document_date:
@@ -82,14 +86,24 @@ export default function OrderDetails() {
       const url = `${BASE_URL}/resource/Gate Pass${data?.data?.length > 0 ? `/${data?.data[0].name}` : ``}`
 
       let docname = data.data.length ? data.data[0].name : ''
-      const response = await fetch(url, {
-        method: data?.data?.length > 0 ? 'PUT' : 'POST',
-        body: JSON.stringify(body)
-      })
-      const resBody = await response.json()
-      if (resBody.data && resBody.data?.name) docname = resBody.data.name
-      if(response.status != 200) setSubmitErrors([...submitErrors, {'type': response.status, 'message': resBody.exception || resBody._server_messages || ''}])
-      
+      if (!isEmpty(body)) {
+        const response = await fetch(url, {
+          method: data?.data?.length > 0 ? 'PUT' : 'POST',
+          body: JSON.stringify(body)
+        })
+        const resBody = await response.json()
+        if (resBody.data && resBody.data?.name) docname = resBody.data.name
+        if (response.status != 200)
+          setSubmitErrors([
+            ...submitErrors,
+            {
+              type: response.status,
+              message: resBody.exception || resBody._server_messages || ''
+            }
+          ])
+        mutate(resBody)
+      }
+
       const filesTob64 = filesToUpload.map((file) =>
         getBase64(file[1][0]).then((response) => response)
       )
@@ -114,15 +128,17 @@ export default function OrderDetails() {
         }).then((response) => response.json())
       )
       const fileUploadStatus = await Promise.all(uploadFiles)
-      if(fileUploadStatus.find(response => !response.data || !response.data?.name)) setSubmitErrors([...submitErrors, {'type': 'FileUploadError'}])
-
-      mutate(resBody)
+      if (
+        fileUploadStatus.find(
+          (response) => !response.message || !response.message?.name
+        )
+      )
+        setSubmitErrors([...submitErrors, { type: 'FileUploadError' }])
     } catch (error) {
       console.error('Failed to post data', error)
-      setSubmitErrors([...submitErrors, {'type': 'PostError'}])
+      setSubmitErrors([...submitErrors, { type: 'PostError' }])
     }
   }
-
   return (
     <>
       {activeTab === 'party_details' && (
@@ -138,6 +154,15 @@ export default function OrderDetails() {
       )}
       {activeTab === 'images' && (
         <ImagesTab
+          data={data}
+          showAlert={showAlert}
+          setShowAlert={setShowAlert}
+          postData={postData}
+          submitErrors={submitErrors}
+        />
+      )}
+      {activeTab === 'documents' && (
+        <DocumentsTab
           data={data}
           showAlert={showAlert}
           setShowAlert={setShowAlert}
@@ -165,8 +190,8 @@ export default function OrderDetails() {
           <Tabs.Trigger value="images">
             <HiCamera size={25} />
           </Tabs.Trigger>
-          <Tabs.Trigger value="transporter_details">
-            <HiTruck size={25} />
+          <Tabs.Trigger value="documents">
+            <HiFolderAdd size={25} />
           </Tabs.Trigger>
           <Tabs.Indicator rounded="l2" />
         </Tabs.List>
