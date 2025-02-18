@@ -14,17 +14,19 @@ import PartyDetailsTab, {
   DocumentsTab,
   ImagesTab
 } from '../components/tab-components'
-import useSWR from 'swr'
+import useSWR, { useSWRConfig } from 'swr'
 import { BASE_URL } from '../constants/app-constants'
 import useFetch from '../hooks/useFetch'
 import { isEmpty } from 'lodash'
 import { useForm } from 'react-hook-form'
 import { getBase64 } from '../utils/utils'
+import useGetAllDocData from '../hooks/useGetAllDocData'
 
 export default function OrderDetails() {
   const { type } = useParams()
   const [query] = useSearchParams()
   const { isAuthenticated } = useAuth()
+  const { mutate } = useSWRConfig()
   const [activeTab, setActiveTab] = useState('party_details')
   const fields =
     type === 'in'
@@ -36,17 +38,16 @@ export default function OrderDetails() {
     [['name', '=', query.get('name')]]
   )
   const fetcher = (url) => fetch(url).then((res) => res.json())
-  const { data, error, mutate } = useSWR(
-    `${BASE_URL}/resource/Gate Pass?fields=["*"]&filters=[["linked_document", "=", "${query.get('name')}"]]&order_by=creation desc`,
-    fetcher
-  )
+  const { data, error } = useGetAllDocData(query.get('name'))
+
   const [showAlert, setShowAlert] = useState()
   const [submitErrors, setSubmitErrors] = useState([])
 
   if (isLoading) {
     return <div>Loading data...</div>
   }
-  const postData = async (body) => {
+
+  const postData = async (body, fileName = '') => {
     try {
       setShowAlert(true)
       const filesToUpload = Object.entries(body).filter(
@@ -101,7 +102,6 @@ export default function OrderDetails() {
               message: resBody.exception || resBody._server_messages || ''
             }
           ])
-        mutate(resBody)
       }
 
       const filesTob64 = filesToUpload.map((file) =>
@@ -110,7 +110,7 @@ export default function OrderDetails() {
       const results = await Promise.all(filesTob64)
       const allFormData = results.map((b64file, i) => {
         const form = new FormData()
-        form.append('filename', filesToUpload[i][1][0]?.name)
+        form.append('filename', `${fileName}${filesToUpload[i][1][0]?.name}`)
         form.append('filedata', b64file)
         form.append('doctype', 'Gate Pass')
         form.append('docname', docname)
@@ -134,6 +134,9 @@ export default function OrderDetails() {
         )
       )
         setSubmitErrors([...submitErrors, { type: 'FileUploadError' }])
+      mutate(
+        `${BASE_URL}/resource/Gate Pass?fields=["*"]&filters=[["linked_document", "=", "${query.get('name')}"]]&order_by=creation desc`
+      )
     } catch (error) {
       console.error('Failed to post data', error)
       setSubmitErrors([...submitErrors, { type: 'PostError' }])

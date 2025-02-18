@@ -174,6 +174,10 @@ export function ImagesTab({
   } = useForm()
 
   const [addlImages, setAddlImages] = useState([])
+  const files =
+    data?.data[0]?.attachments?.filter((file) =>
+      file.file_name.startsWith('I__')
+    ) || []
   const img_url = String(BASE_URL).slice(0, String(BASE_URL).length - 4)
 
   return (
@@ -186,7 +190,7 @@ export function ImagesTab({
         submitErrors={submitErrors}
       />
       <Box w="100vw" display="flex" alignItems="center" justifyContent="center">
-        <form onSubmit={handleSubmit((data) => postData(data))}>
+        <form onSubmit={handleSubmit((data) => postData(data, 'I__'))}>
           <VStack gap="6" align="center">
             <Heading size="xl">Capture Image</Heading>
             <Field.Root orientation="horizontal">
@@ -243,6 +247,27 @@ export function ImagesTab({
                 <FileUploadList />
               </FileUploadRoot>
             </Field.Root>
+            {files?.map((file, i) => {
+              return (
+                <Box key={`${i}${file}`} justifyItems="center">
+                  <Text>{file.file_name}</Text>
+                  <NavLink
+                    key={`${i}${file.file_url}`}
+                    to={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
+                  >
+                    {file.file_type === 'PDF' ? (
+                      <Text>{file.file_url}</Text>
+                    ) : (
+                      <Image
+                        h="100px"
+                        w="100px"
+                        src={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
+                      />
+                    )}
+                  </NavLink>
+                </Box>
+              )
+            })}
             {addlImages.map((index) => {
               return (
                 <Field.Root key={index} orientation="horizontal">
@@ -293,7 +318,10 @@ export function DocumentsTab({
   submitErrors
 }) {
   const [documents, setDocuments] = useState([])
-
+  const files =
+    data?.data[0]?.attachments?.filter((file) =>
+      file.file_name.startsWith('D__')
+    ) || []
   const {
     register,
     handleSubmit,
@@ -311,10 +339,31 @@ export function DocumentsTab({
         submitErrors={submitErrors}
       />
       <Box w="100vw" display="flex" alignItems="center" justifyContent="center">
-        <form onSubmit={handleSubmit((data) => postData(data))}>
+        <form onSubmit={handleSubmit((data) => postData(data, 'D__'))}>
           <VStack gap="6" align="center">
             <Heading size="xl">Attach Documents</Heading>
             <Text>You can attach as many documents as needed</Text>
+            {files?.map((file, i) => {
+              return (
+                <Box key={`${i}${file}`} justifyItems="center">
+                  <Text>{file.file_name}</Text>
+                  <NavLink
+                    key={`${i}${file.file_url}`}
+                    to={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
+                  >
+                    {file.file_type === 'PDF' ? (
+                      <Text>{file.file_url}</Text>
+                    ) : (
+                      <Image
+                        h="100px"
+                        w="100px"
+                        src={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
+                      />
+                    )}
+                  </NavLink>
+                </Box>
+              )
+            })}
             {documents.map((index) => {
               return (
                 <Field.Root
