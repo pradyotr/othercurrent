@@ -12,7 +12,8 @@ import {
 } from 'react-icons/hi'
 import PartyDetailsTab, {
   DocumentsTab,
-  ImagesTab
+  ImagesTab,
+  ItemsTab
 } from '../components/tab-components'
 import useSWR, { useSWRConfig } from 'swr'
 import { BASE_URL } from '../constants/app-constants'
@@ -21,6 +22,7 @@ import { isEmpty } from 'lodash'
 import { useForm } from 'react-hook-form'
 import { getBase64 } from '../utils/utils'
 import useGetAllDocData from '../hooks/useGetAllDocData'
+import useFetchWithChildren from '../hooks/useFetchWithChildren'
 
 export default function OrderDetails() {
   const { type } = useParams()
@@ -32,33 +34,31 @@ export default function OrderDetails() {
     type === 'in'
       ? ['name', 'transaction_date', 'supplier', 'billing_address_display']
       : ['name', 'posting_date', 'customer', 'address_display']
-  const { fetchedData, fetchError, isLoading } = useFetch(
+  const { fetchedData, fetchError, isLoading } = useFetchWithChildren(
     type === 'in' ? `Purchase Order` : `Sales Invoice`,
-    fields,
-    [['name', '=', query.get('name')]]
+    query.get('name')
   )
   const fetcher = (url) => fetch(url).then((res) => res.json())
   const { data, error } = useGetAllDocData(query.get('name'))
 
   const [showAlert, setShowAlert] = useState()
   const [submitErrors, setSubmitErrors] = useState([])
-
   if (isLoading) {
     return <div>Loading data...</div>
   }
-
+  console.log(data)
   const postData = async (body, fileName = '') => {
     try {
       setShowAlert(true)
       const filesToUpload = Object.entries(body).filter(
         (entry) =>
           typeof entry[1] === 'object' &&
+          entry[0] !== 'gate_pass_items' &&
           'length' in entry[1] &&
           entry[1].length > 0
       )
-
       Object.entries(body).map((entry) => {
-        if (typeof entry[1] === 'object') {
+        if (typeof entry[1] === 'object' && entry[0] !== 'gate_pass_items') {
           delete body[entry[0]]
         }
       })
@@ -77,8 +77,8 @@ export default function OrderDetails() {
           linked_document: query.get('name'),
           linked_document_date:
             type === 'in'
-              ? fetchedData.data[0]?.transaction_date
-              : fetchedData.data[0]?.posting_date
+              ? fetchedData.data?.transaction_date
+              : fetchedData.data?.posting_date
         }
       }
       if (isEmpty(body) && filesToUpload.length == 0) {
@@ -110,7 +110,10 @@ export default function OrderDetails() {
       const results = await Promise.all(filesTob64)
       const allFormData = results.map((b64file, i) => {
         const form = new FormData()
-        form.append('filename', `${fileName}${filesToUpload[i][1][0]?.name}`)
+        form.append(
+          'filename',
+          `${filesToUpload[i][0]}${filesToUpload[i][1][0]?.name}`
+        )
         form.append('filedata', b64file)
         form.append('doctype', 'Gate Pass')
         form.append('docname', docname)
@@ -120,6 +123,27 @@ export default function OrderDetails() {
         form.append('decode_base64', true)
         return form
       })
+
+      const filesToRemove = []
+      if (data.data[0]?.attachments?.length) {
+        filesToUpload.map((file, i) => {
+          console.log('file', file[0])
+          const fileIndex = file[0].slice(0, 5).split('_')
+          console.log(fileIndex)
+          const fileDoc = data.data[0]?.attachments?.find((f) =>
+            f.file_name.startsWith(`_${fileIndex[1]}_${fileIndex[2]}_`)
+          )
+          filesToRemove.push(fileDoc?.name)
+        })
+        console.log('files to remove', filesToRemove)
+      }
+
+      const runRemoveFiles = filesToRemove.map((file, i) => {
+        fetch(`${BASE_URL}/resource/File/${file}`, { method: 'DELETE' }).then(
+          (r) => r.json()
+        )
+      })
+
       const uploadFiles = allFormData.map((formdata, i) =>
         fetch(`${BASE_URL}/method/frappe.client.attach_file`, {
           method: 'POST',
@@ -135,7 +159,7 @@ export default function OrderDetails() {
       )
         setSubmitErrors([...submitErrors, { type: 'FileUploadError' }])
       mutate(
-        `${BASE_URL}/resource/Gate Pass?fields=["*"]&filters=[["linked_document", "=", "${query.get('name')}"]]&order_by=creation desc`
+        `${BASE_URL}/resource/Gate Pass?fields=["name"]&filters=[["linked_document", "=", "${query.get('name')}"]]&order_by=creation desc`
       )
     } catch (error) {
       console.error('Failed to post data', error)
@@ -146,6 +170,17 @@ export default function OrderDetails() {
     <>
       {activeTab === 'party_details' && (
         <PartyDetailsTab
+          type={type}
+          showAlert={showAlert}
+          setShowAlert={setShowAlert}
+          fetchedData={fetchedData}
+          data={data}
+          postData={postData}
+          submitErrors={submitErrors}
+        />
+      )}
+      {activeTab === 'items' && (
+        <ItemsTab
           type={type}
           showAlert={showAlert}
           setShowAlert={setShowAlert}

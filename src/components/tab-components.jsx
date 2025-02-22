@@ -10,6 +10,8 @@ import {
   Image,
   Input,
   Spinner,
+  Stack,
+  Table,
   Text,
   Textarea,
   VStack
@@ -65,15 +67,15 @@ export default function PartyDetailsTab({
                 <Highlight query="PO No:" styles={{ fontWeight: 'bold' }}>
                   PO No:
                 </Highlight>
-                {fetchedData.data[0]?.name}
+                {fetchedData.data?.name}
               </Text>
               <Text>
                 <Highlight query="Dated:" styles={{ fontWeight: 'bold' }}>
                   Dated:
                 </Highlight>
                 {type == 'in'
-                  ? fetchedData.data[0]?.transaction_date
-                  : fetchedData.data[0]?.posting_date}
+                  ? fetchedData.data?.transaction_date
+                  : fetchedData.data?.posting_date}
               </Text>
             </HStack>
             <Field.Root>
@@ -85,8 +87,8 @@ export default function PartyDetailsTab({
                 disabled
                 defaultValue={
                   type == 'in'
-                    ? fetchedData.data[0]?.supplier
-                    : fetchedData.data[0]?.customer
+                    ? fetchedData.data?.supplier
+                    : fetchedData.data?.customer
                 }
               />
             </Field.Root>
@@ -104,9 +106,9 @@ export default function PartyDetailsTab({
                 defaultValue={
                   type == 'in'
                     ? String(
-                        fetchedData.data[0]?.billing_address_display
+                        fetchedData.data?.billing_address_display
                       ).replaceAll('<br>', '\n')
-                    : String(fetchedData.data[0]?.address_display).replaceAll(
+                    : String(fetchedData.data?.address_display).replaceAll(
                         '<br>',
                         '\n'
                       )
@@ -123,7 +125,7 @@ export default function PartyDetailsTab({
                 )}
                 defaultValue={
                   type == 'out'
-                    ? fetchedData.data[0]?.name
+                    ? fetchedData.data?.name
                     : data?.data[0]?.supplier_invoice_no || ''
                 }
                 required={type == 'in' ? true : false}
@@ -140,13 +142,165 @@ export default function PartyDetailsTab({
                 )}
                 defaultValue={
                   type == 'out'
-                    ? fetchedData.data[0]?.posting_date
+                    ? fetchedData.data?.posting_date
                     : data?.data[0]?.supplier_invoice_date || ''
                 }
                 required={type == 'in' ? true : false}
                 type="date"
               />
             </Field.Root>
+            <Box display="flex" justifyContent="center">
+              <Button type="submit" color="white" bg="black">
+                Confirm
+              </Button>
+            </Box>
+          </VStack>
+        </form>
+      </Box>
+    </>
+  )
+}
+
+export function ItemsTab({
+  type,
+  fetchedData,
+  data,
+  postData,
+  showAlert,
+  setShowAlert,
+  submitErrors
+}) {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setError,
+    formState: { errors, isSubmitting, isSubmitSuccessful }
+  } = useForm()
+
+  const [tableData, setTableData] = useState(data?.data[0]?.gate_pass_items)
+
+  const handleChange = (e, field, i) => {
+    let updatedData = [...tableData]
+    updatedData[i][field] = e.value
+    setTableData(updatedData)
+  }
+
+  const prepareData = (data) => {
+    const items = []
+    Object.entries(data).map((entry, i) => {
+      const field = entry[0].split('-')
+      if (items.length == Number(field[1])) {
+        items.push({ idx: Number(field[1]) + 1, [field[0]]: entry[1] })
+      } else {
+        items[field[1]][field[0]] = entry[1]
+      }
+    })
+
+    postData({ gate_pass_items: items })
+  }
+  return (
+    <>
+      <FormStatusAlert
+        isSubmitting={isSubmitting}
+        isSubmitSuccessful={isSubmitSuccessful}
+        showAlert={showAlert}
+        setShowAlert={setShowAlert}
+        submitErrors={submitErrors}
+      />
+      <Box
+        w="100vw"
+        p="4"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <form onSubmit={handleSubmit((data) => prepareData(data))}>
+          <VStack gap="6" align="center">
+            <Heading size="xl">Quantity Details</Heading>
+            <Text>
+              <Highlight query="PO No:" styles={{ fontWeight: 'bold' }}>
+                Supplier Name:
+              </Highlight>
+              {fetchedData.data?.supplier}
+            </Text>
+            <HStack gap="4">
+              <Text>
+                <Highlight query="PO No:" styles={{ fontWeight: 'bold' }}>
+                  PO No:
+                </Highlight>
+                {fetchedData.data?.name}
+              </Text>
+              <Text>
+                <Highlight query="Dated:" styles={{ fontWeight: 'bold' }}>
+                  Dated:
+                </Highlight>
+                {type == 'in'
+                  ? fetchedData.data?.transaction_date
+                  : fetchedData.data?.posting_date}
+              </Text>
+            </HStack>
+            <Table.Root
+              size="lg"
+              variant="outline"
+              justifyContent="center"
+              rounded="md"
+            >
+              <Table.Header>
+                <Table.Row>
+                  <Table.ColumnHeader>Item Name</Table.ColumnHeader>
+                  <Table.ColumnHeader w={50}>
+                    {type === 'in' ? 'PO Qty' : 'Invoice Qty'}
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader w={50}>Unit</Table.ColumnHeader>
+                  <Table.ColumnHeader w={50}>Qty (No.)</Table.ColumnHeader>
+                  <Table.ColumnHeader w={50}>Total Qty</Table.ColumnHeader>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {fetchedData?.data?.items?.map((row, i) => {
+                  return (
+                    <Table.Row key={row.name}>
+                      <Table.Cell>
+                        <Input
+                          {...register(`item_name-${i}`)}
+                          disabled={true}
+                          value={row.item_code}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          {...register(`quantity-${i}`)}
+                          disabled={true}
+                          value={row.qty}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          {...register(`uom-${i}`)}
+                          disabled={true}
+                          value={row.uom}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          {...register(`qty_no-${i}`)}
+                          value={tableData ? tableData[i]?.qty_no : ''}
+                          onChange={(e) => handleChange(e, 'qty_no', i)}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Input
+                          {...register(`total_qty-${i}`)}
+                          value={tableData ? tableData[i]?.total_qty : ''}
+                          onChange={(e) => handleChange(e, 'total_qty', i)}
+                        />
+                      </Table.Cell>
+                    </Table.Row>
+                  )
+                })}
+              </Table.Body>
+            </Table.Root>
             <Box display="flex" justifyContent="center">
               <Button type="submit" color="white" bg="black">
                 Confirm
@@ -176,7 +330,7 @@ export function ImagesTab({
   const [addlImages, setAddlImages] = useState([])
   const files =
     data?.data[0]?.attachments?.filter((file) =>
-      file.file_name.startsWith('I__')
+      file.file_name.startsWith('_I_')
     ) || []
   const img_url = String(BASE_URL).slice(0, String(BASE_URL).length - 4)
 
@@ -190,7 +344,7 @@ export function ImagesTab({
         submitErrors={submitErrors}
       />
       <Box w="100vw" display="flex" alignItems="center" justifyContent="center">
-        <form onSubmit={handleSubmit((data) => postData(data, 'I__'))}>
+        <form onSubmit={handleSubmit((data) => postData(data, 'I'))}>
           <VStack gap="6" align="center">
             <Heading size="xl">Capture Image</Heading>
             <Field.Root orientation="horizontal">
@@ -249,23 +403,30 @@ export function ImagesTab({
             </Field.Root>
             {files?.map((file, i) => {
               return (
-                <Box key={`${i}${file}`} justifyItems="center">
-                  <Text>{file.file_name}</Text>
+                <Field.Root key={i} orientation="horizontal">
+                  <Field.Label>{file.file_name.slice(0, 20)}</Field.Label>
                   <NavLink
                     key={`${i}${file.file_url}`}
                     to={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
                   >
-                    {file.file_type === 'PDF' ? (
-                      <Text>{file.file_url}</Text>
-                    ) : (
-                      <Image
-                        h="100px"
-                        w="100px"
-                        src={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
-                      />
-                    )}
+                    <Image
+                      h="100px"
+                      w="100px"
+                      src={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
+                    />
                   </NavLink>
-                </Box>
+                  <FileUploadRoot
+                    {...register(`_I_${i + 1}_`)}
+                    capture="environment"
+                  >
+                    <FileUploadTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <HiCamera /> Capture
+                      </Button>
+                    </FileUploadTrigger>
+                    <FileUploadList />
+                  </FileUploadRoot>
+                </Field.Root>
               )
             })}
             {addlImages.map((index) => {
@@ -273,7 +434,7 @@ export function ImagesTab({
                 <Field.Root key={index} orientation="horizontal">
                   <Field.Label>Add Image</Field.Label>
                   <FileUploadRoot
-                    {...register(`image-${index}`)}
+                    {...register(`_I_${index}_`)}
                     capture="environment"
                   >
                     <FileUploadTrigger asChild>
@@ -320,7 +481,7 @@ export function DocumentsTab({
   const [documents, setDocuments] = useState([])
   const files =
     data?.data[0]?.attachments?.filter((file) =>
-      file.file_name.startsWith('D__')
+      file.file_name.startsWith('_D_')
     ) || []
   const {
     register,
@@ -339,29 +500,36 @@ export function DocumentsTab({
         submitErrors={submitErrors}
       />
       <Box w="100vw" display="flex" alignItems="center" justifyContent="center">
-        <form onSubmit={handleSubmit((data) => postData(data, 'D__'))}>
+        <form onSubmit={handleSubmit((data) => postData(data, 'D'))}>
           <VStack gap="6" align="center">
             <Heading size="xl">Attach Documents</Heading>
             <Text>You can attach as many documents as needed</Text>
             {files?.map((file, i) => {
               return (
-                <Box key={`${i}${file}`} justifyItems="center">
-                  <Text>{file.file_name}</Text>
+                <Field.Root key={i} orientation="horizontal">
+                  <Field.Label>{file.file_name.slice(0, 20)}</Field.Label>
                   <NavLink
                     key={`${i}${file.file_url}`}
                     to={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
                   >
-                    {file.file_type === 'PDF' ? (
-                      <Text>{file.file_url}</Text>
-                    ) : (
-                      <Image
-                        h="100px"
-                        w="100px"
-                        src={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
-                      />
-                    )}
+                    <Image
+                      h="100px"
+                      w="100px"
+                      src={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
+                    />
                   </NavLink>
-                </Box>
+                  <FileUploadRoot
+                    {...register(`_D_${i + 1}_`)}
+                    capture="environment"
+                  >
+                    <FileUploadTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <HiCamera /> Capture
+                      </Button>
+                    </FileUploadTrigger>
+                    <FileUploadList />
+                  </FileUploadRoot>
+                </Field.Root>
               )
             })}
             {documents.map((index) => {
@@ -374,7 +542,7 @@ export function DocumentsTab({
                 >
                   <Field.Label>Add Image</Field.Label>
                   <FileUploadRoot
-                    {...register(`image-${index}`)}
+                    {...register(`_D_${index}_`)}
                     capture="environment"
                   >
                     <FileUploadTrigger asChild>
