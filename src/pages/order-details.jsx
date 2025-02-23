@@ -1,14 +1,15 @@
 import React, { useState } from 'react'
-import { useParams, useSearchParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
-import { Alert, CloseButton, Spinner, Tabs } from '@chakra-ui/react'
+import { Alert, Box, Button, CloseButton, Spinner, Tabs, VStack } from '@chakra-ui/react'
 import {
   HiPencilAlt,
   HiCamera,
   HiTruck,
   HiClipboardList,
   HiCheckCircle,
-  HiFolderAdd
+  HiFolderAdd,
+  HiArrowLeft
 } from 'react-icons/hi'
 import PartyDetailsTab, {
   DocumentsTab,
@@ -28,6 +29,7 @@ export default function OrderDetails() {
   const { type } = useParams()
   const [query] = useSearchParams()
   const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
   const { mutate } = useSWRConfig()
   const [activeTab, setActiveTab] = useState('party_details')
   const fields =
@@ -43,13 +45,19 @@ export default function OrderDetails() {
 
   const [showAlert, setShowAlert] = useState()
   const [submitErrors, setSubmitErrors] = useState([])
+  if (!isAuthenticated) {
+    navigate('/login')
+  }
   if (isLoading) {
     return <div>Loading data...</div>
   }
-  console.log(data)
+  if (data?.data[0]?.docstatus === 1) {
+    navigate(`/submit?docname=${data?.data[0]?.name}`)
+  }
   const postData = async (body, fileName = '') => {
     try {
       setShowAlert(true)
+      console.log(body)
       const filesToUpload = Object.entries(body).filter(
         (entry) =>
           typeof entry[1] === 'object' &&
@@ -167,7 +175,17 @@ export default function OrderDetails() {
     }
   }
   return (
-    <>
+    <Box overflow="auto">
+      <Button
+        m="4"
+        bg="gray.800"
+        size="md"
+        color="white"
+        rounded="md"
+        onClick={() => navigate(-1)}
+      >
+        <HiArrowLeft />Back
+      </Button>
       {activeTab === 'party_details' && (
         <PartyDetailsTab
           type={type}
@@ -234,6 +252,6 @@ export default function OrderDetails() {
           <Tabs.Indicator rounded="l2" />
         </Tabs.List>
       </Tabs.Root>
-    </>
+    </Box>
   )
 }

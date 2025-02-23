@@ -5,6 +5,7 @@ import {
   Button,
   Center,
   HStack,
+  IconButton,
   Input,
   Link,
   Stack,
@@ -14,6 +15,7 @@ import { BiSolidDownArrow, BiSolidUpArrow } from 'react-icons/bi'
 import { useAuth } from '../hooks/useAuth'
 import { debounce } from 'lodash'
 import useGetOrders from '../hooks/useGetOrders'
+import { HiArrowLeft } from 'react-icons/hi'
 export default function Orders() {
   const { type } = useParams()
   const { isAuthenticated } = useAuth()
@@ -56,6 +58,16 @@ export default function Orders() {
 
   return (
     <>
+      <Button
+        m="4" 
+        bg="gray.800"
+        size="md"
+        color="white"
+        rounded="md"
+        onClick={() => navigate(-1)}
+      >
+        <HiArrowLeft />Back
+      </Button>
       <Box w="100vw" p="4" justifyContent="center">
         <Box p="4">
           <HStack gap="4">

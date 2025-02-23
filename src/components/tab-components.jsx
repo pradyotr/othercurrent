@@ -27,8 +27,8 @@ import { BASE_URL } from '../constants/app-constants'
 import { useEffect, useState } from 'react'
 import { isEmpty } from 'lodash'
 import useSWR from 'swr'
+import { NavLink, useNavigate, useSearchParams } from 'react-router'
 import { HiCamera, HiCheckCircle, HiExclamationCircle } from 'react-icons/hi'
-import { NavLink } from 'react-router'
 
 export default function PartyDetailsTab({
   type,
@@ -46,6 +46,7 @@ export default function PartyDetailsTab({
     setError,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm()
+  const navigate = useNavigate()
 
   return (
     <>
@@ -106,12 +107,12 @@ export default function PartyDetailsTab({
                 defaultValue={
                   type == 'in'
                     ? String(
-                        fetchedData.data?.billing_address_display
-                      ).replaceAll('<br>', '\n')
+                      fetchedData.data?.billing_address_display
+                    ).replaceAll('<br>', '\n')
                     : String(fetchedData.data?.address_display).replaceAll(
-                        '<br>',
-                        '\n'
-                      )
+                      '<br>',
+                      '\n'
+                    )
                 }
               />
             </Field.Root>
@@ -149,9 +150,12 @@ export default function PartyDetailsTab({
                 type="date"
               />
             </Field.Root>
-            <Box display="flex" justifyContent="center">
+            <Box display="flex" gap="4" justifyContent="center">
               <Button type="submit" color="white" bg="black">
                 Confirm
+              </Button>
+              <Button onClick={() => {data?.data[0]?.name ? navigate(`/submit?docname=${data?.data[0]?.name}`) : console.error("no doc")}} color="black" bg="white" borderWidth="1px" borderColor="gray.200">
+                Submit
               </Button>
             </Box>
           </VStack>
@@ -335,7 +339,7 @@ export function ImagesTab({
   const img_url = String(BASE_URL).slice(0, String(BASE_URL).length - 4)
 
   return (
-    <>
+    <Box h="600px" overflow="auto">
       <FormStatusAlert
         isSubmitting={isSubmitting}
         isSubmitSuccessful={isSubmitSuccessful}
@@ -343,9 +347,9 @@ export function ImagesTab({
         setShowAlert={setShowAlert}
         submitErrors={submitErrors}
       />
-      <Box w="100vw" display="flex" alignItems="center" justifyContent="center">
+      <Box w="100vw" overflow="auto" display="flex" alignItems="center" justifyContent="center">
         <form onSubmit={handleSubmit((data) => postData(data, 'I'))}>
-          <VStack gap="6" align="center">
+          <VStack overflow="auto" gap="6" align="center">
             <Heading size="xl">Capture Image</Heading>
             <Field.Root orientation="horizontal">
               <Field.Label>Image of Vehicle</Field.Label>
@@ -364,7 +368,6 @@ export function ImagesTab({
               )}
               <FileUploadRoot
                 {...register('vehicle_image')}
-                capture="environment"
               >
                 <FileUploadTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -391,7 +394,6 @@ export function ImagesTab({
               )}
               <FileUploadRoot
                 {...register('material_image')}
-                capture="environment"
               >
                 <FileUploadTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -404,7 +406,7 @@ export function ImagesTab({
             {files?.map((file, i) => {
               return (
                 <Field.Root key={i} orientation="horizontal">
-                  <Field.Label>{file.file_name.slice(0, 20)}</Field.Label>
+                  <Field.Label>Document {i + 1}</Field.Label>
                   <NavLink
                     key={`${i}${file.file_url}`}
                     to={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
@@ -417,7 +419,6 @@ export function ImagesTab({
                   </NavLink>
                   <FileUploadRoot
                     {...register(`_I_${i + 1}_`)}
-                    capture="environment"
                   >
                     <FileUploadTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -429,13 +430,27 @@ export function ImagesTab({
                 </Field.Root>
               )
             })}
+            {!files?.length || files.length < 5 ? Array.from({ length: 5 - files.length }, (_, i) => (
+              <Field.Root key={i + (files?.length || 0)} orientation="horizontal">
+                <Field.Label>Document {i + (files?.length) + 1}</Field.Label>
+                <FileUploadRoot
+                  {...register(`_I_${i + (files?.length) + 1}_`)}
+                >
+                  <FileUploadTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <HiCamera /> Capture
+                    </Button>
+                  </FileUploadTrigger>
+                  <FileUploadList />
+                </FileUploadRoot>
+              </Field.Root>
+            )) : <></>}
             {addlImages.map((index) => {
               return (
                 <Field.Root key={index} orientation="horizontal">
                   <Field.Label>Add Image</Field.Label>
                   <FileUploadRoot
-                    {...register(`_I_${index}_`)}
-                    capture="environment"
+                    {...register(`_I_${index + 5}_`)}
                   >
                     <FileUploadTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -467,7 +482,7 @@ export function ImagesTab({
           </VStack>
         </form>
       </Box>
-    </>
+    </Box>
   )
 }
 
@@ -491,7 +506,7 @@ export function DocumentsTab({
   } = useForm()
 
   return (
-    <>
+    <Box h="600px">
       <FormStatusAlert
         isSubmitting={isSubmitting}
         isSubmitSuccessful={isSubmitSuccessful}
@@ -507,7 +522,7 @@ export function DocumentsTab({
             {files?.map((file, i) => {
               return (
                 <Field.Root key={i} orientation="horizontal">
-                  <Field.Label>{file.file_name.slice(0, 20)}</Field.Label>
+                  <Field.Label>Document {i + 1}</Field.Label>
                   <NavLink
                     key={`${i}${file.file_url}`}
                     to={`${BASE_URL.slice(0, BASE_URL.length - 3)}${file.file_url}`}
@@ -520,7 +535,6 @@ export function DocumentsTab({
                   </NavLink>
                   <FileUploadRoot
                     {...register(`_D_${i + 1}_`)}
-                    capture="environment"
                   >
                     <FileUploadTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -532,6 +546,21 @@ export function DocumentsTab({
                 </Field.Root>
               )
             })}
+            {!files?.length || files.length < 5 ? Array.from({ length: 5 - files.length }, (_, i) => (
+              <Field.Root key={i + (files?.length || 0)} orientation="horizontal">
+                <Field.Label>Document {i + (files?.length) + 1}</Field.Label>
+                <FileUploadRoot
+                  {...register(`_D_${i + (files?.length) + 1}_`)}
+                >
+                  <FileUploadTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <HiCamera /> Capture
+                    </Button>
+                  </FileUploadTrigger>
+                  <FileUploadList />
+                </FileUploadRoot>
+              </Field.Root>
+            )) : <></>}
             {documents.map((index) => {
               return (
                 <Field.Root
@@ -543,7 +572,6 @@ export function DocumentsTab({
                   <Field.Label>Add Image</Field.Label>
                   <FileUploadRoot
                     {...register(`_D_${index}_`)}
-                    capture="environment"
                   >
                     <FileUploadTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -575,7 +603,7 @@ export function DocumentsTab({
           </VStack>
         </form>
       </Box>
-    </>
+    </Box>
   )
 }
 

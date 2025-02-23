@@ -13,7 +13,7 @@ const useGetAllDocData = (linked_document) => {
             ['attached_to_name', '=', gatePassDoc.data[0].name],
             ['attached_to_field', 'is', 'not set']
           ]
-        )}`
+        )}&order_by=file_name`
       )
       const filesData = await getFiles.json()
 
