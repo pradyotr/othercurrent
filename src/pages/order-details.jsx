@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
 import { Alert, Box, Button, CloseButton, Spinner, Tabs, VStack } from '@chakra-ui/react'
@@ -45,6 +45,34 @@ export default function OrderDetails() {
 
   const [showAlert, setShowAlert] = useState()
   const [submitErrors, setSubmitErrors] = useState([])
+  const [tabStatus, setTabStatus] = useState({})
+  useEffect(() => {
+    if (data && data.data.length > 0) {
+      let status = {party_details: true, items: true}
+      const fields = ["supplier","supplier_invoice_no","supplier_invoice_date"]
+      fields?.map((field) => {
+        if (!(field in data?.data[0]) || data.data[0][field] == "") {
+          status['party_details'] = false
+        } 
+      })
+      if(data?.data[0]?.gate_pass_items.length == 0) {
+        status['items'] = false
+      } else {
+        fetchedData?.data?.items?.map((row, i) => {
+          if( !(data?.data[0]?.gate_pass_items.length > i && data?.data[0]?.gate_pass_items[i]?.total_qty !=0 && data?.data[0]?.gate_pass_items[i]?.qty_no !=0)) {
+            status['items'] = false
+          } else {
+            status['items'] = true
+          }
+        })
+      }
+      if (data?.data[0]?.vehicle_image && data?.data[0]?.material_image)  {
+        status['images'] = true
+      }
+      setTabStatus(status)
+    }
+  }, [data])
+  console.log()
   if (!isAuthenticated) {
     navigate('/login')
   }
@@ -54,6 +82,7 @@ export default function OrderDetails() {
   if (data?.data[0]?.docstatus === 1) {
     navigate(`/submit?docname=${data?.data[0]?.name}`)
   }
+  console.log(tabStatus)
   const postData = async (body, fileName = '') => {
     try {
       setShowAlert(true)
@@ -194,7 +223,10 @@ export default function OrderDetails() {
           fetchedData={fetchedData}
           data={data}
           postData={postData}
+          status={tabStatus}
+          setStatus={setTabStatus}
           submitErrors={submitErrors}
+          setActiveTab={setActiveTab}
         />
       )}
       {activeTab === 'items' && (
@@ -204,8 +236,11 @@ export default function OrderDetails() {
           setShowAlert={setShowAlert}
           fetchedData={fetchedData}
           data={data}
+          status={tabStatus}
+          setStatus={setTabStatus}
           postData={postData}
           submitErrors={submitErrors}
+          setActiveTab={setActiveTab}
         />
       )}
       {activeTab === 'images' && (
@@ -215,6 +250,7 @@ export default function OrderDetails() {
           setShowAlert={setShowAlert}
           postData={postData}
           submitErrors={submitErrors}
+          setActiveTab={setActiveTab}
         />
       )}
       {activeTab === 'documents' && (
@@ -224,6 +260,7 @@ export default function OrderDetails() {
           setShowAlert={setShowAlert}
           postData={postData}
           submitErrors={submitErrors}
+          setActiveTab={setActiveTab}
         />
       )}
       <Tabs.Root
@@ -237,17 +274,17 @@ export default function OrderDetails() {
         variant="enclosed"
       >
         <Tabs.List>
-          <Tabs.Trigger value="party_details">
-            <HiPencilAlt size={25} />
+          <Tabs.Trigger value="party_details" bgColor={tabStatus?.party_details ?"green.400": ""}>
+            <HiPencilAlt size={25} color={tabStatus?.party_details ?"green":""} />
           </Tabs.Trigger>
-          <Tabs.Trigger value="items">
-            <HiClipboardList size={25} />
+          <Tabs.Trigger value="items" bgColor={tabStatus?.items ?"green.400": ""} disabled={!tabStatus?.party_details}>
+            <HiClipboardList size={25} color={tabStatus?.items ?"green":""} />
           </Tabs.Trigger>
-          <Tabs.Trigger value="images">
-            <HiCamera size={25} />
+          <Tabs.Trigger value="images" bgColor={tabStatus?.images ?"green.400": ""} disabled={!tabStatus?.items}>
+            <HiCamera size={25} color={tabStatus?.images ?"green":""} />
           </Tabs.Trigger>
-          <Tabs.Trigger value="documents">
-            <HiFolderAdd size={25} />
+          <Tabs.Trigger value="documents" bgColor={tabStatus?.documents ?"green.400": ""} disabled={!tabStatus?.images}>
+            <HiFolderAdd size={25} color={tabStatus?.documents ?"green":""} />
           </Tabs.Trigger>
           <Tabs.Indicator rounded="l2" />
         </Tabs.List>
