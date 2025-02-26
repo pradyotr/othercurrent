@@ -1,59 +1,72 @@
 import React, { useState } from 'react'
-import { useParams, useSearchParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
-import { Alert, CloseButton, Spinner, Tabs } from '@chakra-ui/react'
+import { Alert, Box, Button, CloseButton, Spinner, Tabs, VStack } from '@chakra-ui/react'
 import {
   HiPencilAlt,
   HiCamera,
   HiTruck,
   HiClipboardList,
-  HiCheckCircle
+  HiCheckCircle,
+  HiFolderAdd,
+  HiArrowLeft
 } from 'react-icons/hi'
-import PartyDetailsTab, { ImagesTab } from '../components/tab-components'
-import useSWR from 'swr'
+import PartyDetailsTab, {
+  DocumentsTab,
+  ImagesTab,
+  ItemsTab
+} from '../components/tab-components'
+import useSWR, { useSWRConfig } from 'swr'
 import { BASE_URL } from '../constants/app-constants'
 import useFetch from '../hooks/useFetch'
 import { isEmpty } from 'lodash'
 import { useForm } from 'react-hook-form'
 import { getBase64 } from '../utils/utils'
+import useGetAllDocData from '../hooks/useGetAllDocData'
+import useFetchWithChildren from '../hooks/useFetchWithChildren'
 
 export default function OrderDetails() {
   const { type } = useParams()
   const [query] = useSearchParams()
   const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+  const { mutate } = useSWRConfig()
   const [activeTab, setActiveTab] = useState('party_details')
   const fields =
     type === 'in'
       ? ['name', 'transaction_date', 'supplier', 'billing_address_display']
       : ['name', 'posting_date', 'customer', 'address_display']
-  const { fetchedData, fetchError, isLoading } = useFetch(
+  const { fetchedData, fetchError, isLoading } = useFetchWithChildren(
     type === 'in' ? `Purchase Order` : `Sales Invoice`,
-    fields,
-    [['name', '=', query.get('name')]]
+    query.get('name')
   )
   const fetcher = (url) => fetch(url).then((res) => res.json())
-  const { data, error, mutate } = useSWR(
-    `${BASE_URL}/resource/Gate Pass?fields=["*"]&filters=[["linked_document", "=", "${query.get('name')}"]]&order_by=creation desc`,
-    fetcher
-  )
+  const { data, error } = useGetAllDocData(query.get('name'))
+
   const [showAlert, setShowAlert] = useState()
   const [submitErrors, setSubmitErrors] = useState([])
-
+  if (!isAuthenticated) {
+    navigate('/login')
+  }
   if (isLoading) {
     return <div>Loading data...</div>
   }
-  const postData = async (body) => {
+  if (data?.data[0]?.docstatus === 1) {
+    navigate(`/submit?docname=${data?.data[0]?.name}`)
+  }
+  const postData = async (body, fileName = '') => {
     try {
       setShowAlert(true)
+      console.log(body)
       const filesToUpload = Object.entries(body).filter(
         (entry) =>
           typeof entry[1] === 'object' &&
+          entry[0] !== 'gate_pass_items' &&
           'length' in entry[1] &&
           entry[1].length > 0
       )
-
       Object.entries(body).map((entry) => {
-        if (typeof entry[1] === 'object') {
+        if (typeof entry[1] === 'object' && entry[0] !== 'gate_pass_items') {
           delete body[entry[0]]
         }
       })
@@ -67,13 +80,13 @@ export default function OrderDetails() {
       } else {
         body = {
           ...body,
-          gate_pass_type: type === 'in' ? 'Inward' : 'Outward',
+          gate_pass_type: type === 'in' ? 'IN' : 'OUT',
           linked_to: type === 'in' ? 'Purchase Order' : 'Sales Invoice',
           linked_document: query.get('name'),
           linked_document_date:
             type === 'in'
-              ? fetchedData.data[0]?.transaction_date
-              : fetchedData.data[0]?.posting_date
+              ? fetchedData.data?.transaction_date
+              : fetchedData.data?.posting_date
         }
       }
       if (isEmpty(body) && filesToUpload.length == 0) {
@@ -82,21 +95,33 @@ export default function OrderDetails() {
       const url = `${BASE_URL}/resource/Gate Pass${data?.data?.length > 0 ? `/${data?.data[0].name}` : ``}`
 
       let docname = data.data.length ? data.data[0].name : ''
-      const response = await fetch(url, {
-        method: data?.data?.length > 0 ? 'PUT' : 'POST',
-        body: JSON.stringify(body)
-      })
-      const resBody = await response.json()
-      if (resBody.data && resBody.data?.name) docname = resBody.data.name
-      if(response.status != 200) setSubmitErrors([...submitErrors, {'type': response.status, 'message': resBody.exception || resBody._server_messages || ''}])
-      
+      if (!isEmpty(body)) {
+        const response = await fetch(url, {
+          method: data?.data?.length > 0 ? 'PUT' : 'POST',
+          body: JSON.stringify(body)
+        })
+        const resBody = await response.json()
+        if (resBody.data && resBody.data?.name) docname = resBody.data.name
+        if (response.status != 200)
+          setSubmitErrors([
+            ...submitErrors,
+            {
+              type: response.status,
+              message: resBody.exception || resBody._server_messages || ''
+            }
+          ])
+      }
+
       const filesTob64 = filesToUpload.map((file) =>
         getBase64(file[1][0]).then((response) => response)
       )
       const results = await Promise.all(filesTob64)
       const allFormData = results.map((b64file, i) => {
         const form = new FormData()
-        form.append('filename', filesToUpload[i][1][0]?.name)
+        form.append(
+          'filename',
+          `${filesToUpload[i][0]}${filesToUpload[i][1][0]?.name}`
+        )
         form.append('filedata', b64file)
         form.append('doctype', 'Gate Pass')
         form.append('docname', docname)
@@ -106,6 +131,27 @@ export default function OrderDetails() {
         form.append('decode_base64', true)
         return form
       })
+
+      const filesToRemove = []
+      if (data.data[0]?.attachments?.length) {
+        filesToUpload.map((file, i) => {
+          console.log('file', file[0])
+          const fileIndex = file[0].slice(0, 5).split('_')
+          console.log(fileIndex)
+          const fileDoc = data.data[0]?.attachments?.find((f) =>
+            f.file_name.startsWith(`_${fileIndex[1]}_${fileIndex[2]}_`)
+          )
+          filesToRemove.push(fileDoc?.name)
+        })
+        console.log('files to remove', filesToRemove)
+      }
+
+      const runRemoveFiles = filesToRemove.map((file, i) => {
+        fetch(`${BASE_URL}/resource/File/${file}`, { method: 'DELETE' }).then(
+          (r) => r.json()
+        )
+      })
+
       const uploadFiles = allFormData.map((formdata, i) =>
         fetch(`${BASE_URL}/method/frappe.client.attach_file`, {
           method: 'POST',
@@ -114,17 +160,32 @@ export default function OrderDetails() {
         }).then((response) => response.json())
       )
       const fileUploadStatus = await Promise.all(uploadFiles)
-      if(fileUploadStatus.find(response => !response.data || !response.data?.name)) setSubmitErrors([...submitErrors, {'type': 'FileUploadError'}])
-
-      mutate(resBody)
+      if (
+        fileUploadStatus.find(
+          (response) => !response.message || !response.message?.name
+        )
+      )
+        setSubmitErrors([...submitErrors, { type: 'FileUploadError' }])
+      mutate(
+        `${BASE_URL}/resource/Gate Pass?fields=["name"]&filters=[["linked_document", "=", "${query.get('name')}"]]&order_by=creation desc`
+      )
     } catch (error) {
       console.error('Failed to post data', error)
-      setSubmitErrors([...submitErrors, {'type': 'PostError'}])
+      setSubmitErrors([...submitErrors, { type: 'PostError' }])
     }
   }
-
   return (
-    <>
+    <Box overflow="auto">
+      <Button
+        m="4"
+        bg="gray.800"
+        size="md"
+        color="white"
+        rounded="md"
+        onClick={() => navigate(-1)}
+      >
+        <HiArrowLeft />Back
+      </Button>
       {activeTab === 'party_details' && (
         <PartyDetailsTab
           type={type}
@@ -136,8 +197,28 @@ export default function OrderDetails() {
           submitErrors={submitErrors}
         />
       )}
+      {activeTab === 'items' && (
+        <ItemsTab
+          type={type}
+          showAlert={showAlert}
+          setShowAlert={setShowAlert}
+          fetchedData={fetchedData}
+          data={data}
+          postData={postData}
+          submitErrors={submitErrors}
+        />
+      )}
       {activeTab === 'images' && (
         <ImagesTab
+          data={data}
+          showAlert={showAlert}
+          setShowAlert={setShowAlert}
+          postData={postData}
+          submitErrors={submitErrors}
+        />
+      )}
+      {activeTab === 'documents' && (
+        <DocumentsTab
           data={data}
           showAlert={showAlert}
           setShowAlert={setShowAlert}
@@ -165,12 +246,12 @@ export default function OrderDetails() {
           <Tabs.Trigger value="images">
             <HiCamera size={25} />
           </Tabs.Trigger>
-          <Tabs.Trigger value="transporter_details">
-            <HiTruck size={25} />
+          <Tabs.Trigger value="documents">
+            <HiFolderAdd size={25} />
           </Tabs.Trigger>
           <Tabs.Indicator rounded="l2" />
         </Tabs.List>
       </Tabs.Root>
-    </>
+    </Box>
   )
 }
