@@ -501,6 +501,7 @@ export function DocumentsTab({
     watch,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm()
+  console.log(data.data[0].attachments)
   return (
     <Box h="600px">
       <FormStatusAlert
@@ -594,7 +595,7 @@ export function DocumentsTab({
               </Button>
             </Box>
             <Box display="flex" justifyContent="center">
-              <Button onClick={() => {data?.data[0]?.name ? navigate(`/submit?docname=${data?.data[0]?.name}`) : console.error("no doc")}} type="submit" color="white" bg="black">
+              <Button onClick={() => {data?.data[0]?.name && !errors['_D_1_'] && data?.data[0]?.attachments?.find((atc) => atc.file_name.startsWith('_D_1_')) ? navigate(`/submit?docname=${data?.data[0]?.name}`) : console.error("no doc")}} type="submit" color="white" bg="black">
                 Confirm
               </Button>
             </Box>
