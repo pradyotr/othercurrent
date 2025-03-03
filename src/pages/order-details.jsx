@@ -24,6 +24,7 @@ import { useForm } from 'react-hook-form'
 import { getBase64 } from '../utils/utils'
 import useGetAllDocData from '../hooks/useGetAllDocData'
 import useFetchWithChildren from '../hooks/useFetchWithChildren'
+import BottomTabs from '../components/common'
 
 export default function OrderDetails() {
   const { type } = useParams()
@@ -42,7 +43,6 @@ export default function OrderDetails() {
   )
   const fetcher = (url) => fetch(url).then((res) => res.json())
   const { data, error } = useGetAllDocData(query.get('name'))
-
   const [showAlert, setShowAlert] = useState()
   const [submitErrors, setSubmitErrors] = useState([])
   const [tabStatus, setTabStatus] = useState({})
@@ -69,24 +69,24 @@ export default function OrderDetails() {
       if (data?.data[0]?.vehicle_image && data?.data[0]?.material_image)  {
         status['images'] = true
       }
+      if(data?.data[0]?.attachments?.find((file) => file?.file_name?.startsWith('_D_1_')))  {
+        status['documents'] = true
+      }
       setTabStatus(status)
     }
   }, [data])
-  console.log()
   if (!isAuthenticated) {
     navigate('/login')
   }
   if (isLoading) {
     return <div>Loading data...</div>
   }
-  if (data?.data[0]?.docstatus === 1) {
-    navigate(`/submit?docname=${data?.data[0]?.name}`)
-  }
-  console.log(tabStatus)
+  // if (data?.data[0]?.docstatus === 1) {
+  //   navigate(`/submit?docname=${data?.data[0]?.name}`)
+  // }
   const postData = async (body, fileName = '') => {
     try {
       setShowAlert(true)
-      console.log(body)
       const filesToUpload = Object.entries(body).filter(
         (entry) =>
           typeof entry[1] === 'object' &&
@@ -164,15 +164,12 @@ export default function OrderDetails() {
       const filesToRemove = []
       if (data.data[0]?.attachments?.length) {
         filesToUpload.map((file, i) => {
-          console.log('file', file[0])
           const fileIndex = file[0].slice(0, 5).split('_')
-          console.log(fileIndex)
           const fileDoc = data.data[0]?.attachments?.find((f) =>
             f.file_name.startsWith(`_${fileIndex[1]}_${fileIndex[2]}_`)
           )
           filesToRemove.push(fileDoc?.name)
         })
-        console.log('files to remove', filesToRemove)
       }
 
       const runRemoveFiles = filesToRemove.map((file, i) => {
@@ -215,7 +212,7 @@ export default function OrderDetails() {
       >
         <HiArrowLeft />Back
       </Button>
-      {activeTab === 'party_details' && (
+      {activeTab === 'party_details' && query.get('name') && (
         <PartyDetailsTab
           type={type}
           showAlert={showAlert}
@@ -229,7 +226,7 @@ export default function OrderDetails() {
           setActiveTab={setActiveTab}
         />
       )}
-      {activeTab === 'items' && (
+      {activeTab === 'items' && query.get('name') && (
         <ItemsTab
           type={type}
           showAlert={showAlert}
@@ -243,7 +240,7 @@ export default function OrderDetails() {
           setActiveTab={setActiveTab}
         />
       )}
-      {activeTab === 'images' && (
+      {activeTab === 'images' && query.get('name') && (
         <ImagesTab
           data={data}
           showAlert={showAlert}
@@ -251,9 +248,11 @@ export default function OrderDetails() {
           postData={postData}
           submitErrors={submitErrors}
           setActiveTab={setActiveTab}
+          setStatus={setTabStatus}
+          status={tabStatus}
         />
       )}
-      {activeTab === 'documents' && (
+      {activeTab === 'documents' && query.get('name') &&  (
         <DocumentsTab
           data={data}
           showAlert={showAlert}
@@ -261,9 +260,21 @@ export default function OrderDetails() {
           postData={postData}
           submitErrors={submitErrors}
           setActiveTab={setActiveTab}
+          status={tabStatus}
         />
       )}
-      <Tabs.Root
+      <BottomTabs
+        tabs={[
+          {'name': 'party_details', 'icon': <HiPencilAlt size={25} />},
+          {'name': 'items', 'icon': <HiClipboardList size={25} />},
+          {'name': 'images', 'icon': <HiCamera size={25} />},
+          {'name': 'documents', 'icon': <HiFolderAdd size={25} />}
+        ]}
+        tabStatus={tabStatus}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+      {/* <Tabs.Root
         w="100vw"
         value={activeTab}
         onValueChange={(e) => setActiveTab(e.value)}
@@ -274,21 +285,21 @@ export default function OrderDetails() {
         variant="enclosed"
       >
         <Tabs.List>
-          <Tabs.Trigger value="party_details" bgColor={tabStatus?.party_details ?"green.400": ""}>
-            <HiPencilAlt size={25} color={tabStatus?.party_details ?"green":""} />
+          <Tabs.Trigger value="party_details" bgColor={tabStatus?.party_details ?"green.400": "yellow.300"}>
+            <HiPencilAlt size={25} color={tabStatus?.party_details ?"green":"brown"} />
           </Tabs.Trigger>
-          <Tabs.Trigger value="items" bgColor={tabStatus?.items ?"green.400": ""} disabled={!tabStatus?.party_details}>
-            <HiClipboardList size={25} color={tabStatus?.items ?"green":""} />
+          <Tabs.Trigger value="items" bgColor={tabStatus?.items ?"green.400": tabStatus.party_details? "yellow.300": "gray.300"} disabled={!tabStatus?.party_details}>
+            <HiClipboardList size={25} color={tabStatus?.items ?"green":tabStatus.party_details? "brown": "gray"} />
           </Tabs.Trigger>
-          <Tabs.Trigger value="images" bgColor={tabStatus?.images ?"green.400": ""} disabled={!tabStatus?.items}>
-            <HiCamera size={25} color={tabStatus?.images ?"green":""} />
+          <Tabs.Trigger value="images" bgColor={tabStatus?.images ?"green.400": tabStatus.items? "yellow.300": "gray.300"} disabled={!tabStatus?.items}>
+            <HiCamera size={25} color={tabStatus?.images ?"green":tabStatus.items? "brown": "gray"} />
           </Tabs.Trigger>
-          <Tabs.Trigger value="documents" bgColor={tabStatus?.documents ?"green.400": ""} disabled={!tabStatus?.images}>
-            <HiFolderAdd size={25} color={tabStatus?.documents ?"green":""} />
+          <Tabs.Trigger value="documents" bgColor={tabStatus?.documents ?"green.400": tabStatus.images? "yellow.300": "gray.300"} disabled={!tabStatus?.images}>
+            <HiFolderAdd size={25} color={tabStatus?.documents ?"green":tabStatus.images? "brown": "gray"} />
           </Tabs.Trigger>
           <Tabs.Indicator rounded="l2" />
         </Tabs.List>
-      </Tabs.Root>
+      </Tabs.Root> */}
     </Box>
   )
 }

@@ -12,10 +12,10 @@ export default function Home() {
     <Box w="100vw" justifyContent="center">
       <VStack gap="6" align="center">
         <Button size="lg" w="44" asChild bg="gray.800" color="white">
-          <NavLink to="/orders/in">Material IN</NavLink>
+          <NavLink to="/landing/in">Material IN</NavLink>
         </Button>
         <Button size="lg" w="44" asChild bg="gray.800" color="white">
-          <NavLink to="/orders/out">Material OUT</NavLink>
+          <NavLink to="/landing/out">Material OUT</NavLink>
         </Button>
       </VStack>
     </Box>

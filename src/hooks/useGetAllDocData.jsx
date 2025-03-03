@@ -2,7 +2,7 @@
 import { BASE_URL } from '../constants/app-constants'
 import useSWR from 'swr'
 
-const useGetAllDocData = (linked_document) => {
+const useGetAllDocData = (linked_document, is_self=false) => {
   const fetcher = async (url) => {
     const response = await fetch(url)
     let gatePassDoc = await response.json()
@@ -29,7 +29,7 @@ const useGetAllDocData = (linked_document) => {
 
     return gatePassDoc
   }
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR( is_self ? `${BASE_URL}/resource/Gate Pass?fields=["name"]&filters=[["name", "=", "${linked_document}"]]&order_by=creation desc` :
     `${BASE_URL}/resource/Gate Pass?fields=["name"]&filters=[["linked_document", "=", "${linked_document}"]]&order_by=creation desc`,
     fetcher
   )

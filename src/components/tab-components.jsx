@@ -38,7 +38,8 @@ export default function PartyDetailsTab({
   showAlert,
   setShowAlert,
   submitErrors,
-  setActiveTab
+  setActiveTab,
+  status
 }) {
   const {
     register,
@@ -48,7 +49,6 @@ export default function PartyDetailsTab({
     getValues,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm()
-  
   return (
     <Box h="600px" overflow="auto">
       <FormStatusAlert
@@ -155,7 +155,10 @@ export default function PartyDetailsTab({
               {(errors?.supplier_invoice_date || errors?.invoice_date) && <Field.ErrorText>This field is required</Field.ErrorText>}
             </Field.Root>
             <Box display="flex" gap="4" justifyContent="center">
-              <Button onClick={() => isSubmitSuccessful ? setActiveTab('items') : ""} type="submit" color="white" bg="black">
+              <Button type="submit" color="white" bg="black">
+                Save
+              </Button>
+              <Button onClick={() => { if(status?.party_details) setActiveTab('items')}} type="button" borderColor="black" color="black" bg="white">
                 Next
               </Button>
             </Box>
@@ -174,7 +177,8 @@ export function ItemsTab({
   showAlert,
   setShowAlert,
   submitErrors,
-  setActiveTab
+  setActiveTab,
+  status
 }) {
   const {
     register,
@@ -290,28 +294,31 @@ export function ItemsTab({
                         />
                       </Table.Cell>
                       <Table.Cell>
-                          <Input
-                            {...register(`qty_no-${i}`, { required: true })}
-                            value={tableData ? tableData[i]?.qty_no : ''}
-                            onChange={(e) => handleChange(e, 'qty_no', i)}
-                            borderColor={`qty_no-${i}` in errors ? "red": ""}
-                          />
+                        <Input
+                          {...register(`qty_no-${i}`, { required: true })}
+                          value={tableData ? tableData[i]?.qty_no : ''}
+                          onChange={(e) => handleChange(e, 'qty_no', i)}
+                          borderColor={`qty_no-${i}` in errors ? "red" : ""}
+                        />
                       </Table.Cell>
                       <Table.Cell>
-                          <Input
-                            {...register(`total_qty-${i}`, { required: true })}
-                            value={tableData ? tableData[i]?.total_qty : ''}
-                            onChange={(e) => handleChange(e, 'total_qty', i)}
-                            borderColor={`total_qty-${i}` in errors ? "red": ""}
-                          />
+                        <Input
+                          {...register(`total_qty-${i}`, { required: true })}
+                          value={tableData ? tableData[i]?.total_qty : ''}
+                          onChange={(e) => handleChange(e, 'total_qty', i)}
+                          borderColor={`total_qty-${i}` in errors ? "red" : ""}
+                        />
                       </Table.Cell>
                     </Table.Row>
                   )
                 })}
               </Table.Body>
             </Table.Root>
-            <Box display="flex" justifyContent="center">
-              <Button onClick={() => isSubmitSuccessful ? setActiveTab('images') : ""} type="submit" color="white" bg="black">
+            <Box display="flex" gap="4" justifyContent="center">
+              <Button type="submit" color="white" bg="black">
+                Save
+              </Button>
+              <Button onClick={() => { if(status?.items) setActiveTab('images')}} type="button" borderColor="black" color="black" bg="white">
                 Next
               </Button>
             </Box>
@@ -328,7 +335,8 @@ export function ImagesTab({
   showAlert,
   setShowAlert,
   submitErrors,
-  setActiveTab
+  setActiveTab,
+  status
 }) {
   const {
     register,
@@ -373,15 +381,15 @@ export function ImagesTab({
                 <></>
               )}
               <FileUploadRoot
-                {...register('vehicle_image', {required: true})}
-                
+                {...register('vehicle_image', { required: true })}
+
               >
-                <FileUploadTrigger asChild borderColor={errors.vehicle_image ? "red": ""}>
+                <FileUploadTrigger asChild borderColor={errors.vehicle_image ? "red" : ""}>
                   <Button variant="outline" size="sm">
                     <HiCamera /> Capture
                   </Button>
                 </FileUploadTrigger>
-                {errors.vehicle_image ? <Text color="red">Upload File</Text>: <></>}
+                {errors.vehicle_image ? <Text color="red">Upload File</Text> : <></>}
                 <FileUploadList />
               </FileUploadRoot>
             </Field.Root>
@@ -401,14 +409,14 @@ export function ImagesTab({
                 <></>
               )}
               <FileUploadRoot
-                {...register('material_image', {required: true})}
+                {...register('material_image', { required: true })}
               >
-                <FileUploadTrigger asChild borderColor={errors.material_image ? "red": ""}>
+                <FileUploadTrigger asChild borderColor={errors.material_image ? "red" : ""}>
                   <Button variant="outline" size="sm">
                     <HiCamera /> Capture
                   </Button>
                 </FileUploadTrigger>
-                {errors.material_image ? <Text color="red">Upload File</Text>: <></>}
+                {errors.material_image ? <Text color="red">Upload File</Text> : <></>}
                 <FileUploadList />
               </FileUploadRoot>
             </Field.Root>
@@ -468,8 +476,11 @@ export function ImagesTab({
                 + Attach more images
               </Button>
             </Box>
-            <Box display="flex" justifyContent="center">
-              <Button onClick={() => isSubmitSuccessful ? setActiveTab('documents') : ""} type="submit" color="white" bg="black">
+            <Box display="flex" gap="4" justifyContent="center">
+              <Button type="submit" color="white" bg="black">
+                Save
+              </Button>
+              <Button onClick={() => { if(status?.images) setActiveTab('documents')}} type="button" borderColor="black" color="black" bg="white">
                 Next
               </Button>
             </Box>
@@ -486,7 +497,8 @@ export function DocumentsTab({
   showAlert,
   setShowAlert,
   submitErrors,
-  setActiveTab
+  setActiveTab,
+  status
 }) {
   const [documents, setDocuments] = useState([])
   const [error, setError] = useState(false)
@@ -533,12 +545,12 @@ export function DocumentsTab({
                   <FileUploadRoot
                     {...register(`_D_${i + 1}_`)}
                   >
-                    <FileUploadTrigger asChild borderColor={error ? "red": ""}>
+                    <FileUploadTrigger asChild borderColor={error ? "red" : ""}>
                       <Button variant="outline" size="sm">
                         <HiCamera /> Capture
                       </Button>
                     </FileUploadTrigger>
-                    
+
                     <FileUploadList />
                   </FileUploadRoot>
                 </Field.Root>
@@ -548,14 +560,14 @@ export function DocumentsTab({
               <Field.Root key={i + (files?.length || 0)} orientation="horizontal">
                 <Field.Label>Document {i + (files?.length) + 1}</Field.Label>
                 <FileUploadRoot
-                  {...register(`_D_${i + (files?.length) + 1}_`, {required: i===0 ? true: false})}
+                  {...register(`_D_${i + (files?.length) + 1}_`, { required: i === 0 ? true : false })}
                 >
-                  <FileUploadTrigger asChild borderColor={errors['_D_1_'] && i===0 ? "red": ""}>
+                  <FileUploadTrigger asChild borderColor={errors['_D_1_'] && i === 0 ? "red" : ""}>
                     <Button variant="outline" size="sm">
                       <HiCamera /> Capture
                     </Button>
                   </FileUploadTrigger>
-                  {errors['_D_1_'] && i===0 ? <Text color="red">Upload File</Text>: <></>}
+                  {errors['_D_1_'] && i === 0 ? <Text color="red">Upload File</Text> : <></>}
                   <FileUploadList />
                 </FileUploadRoot>
               </Field.Root>
@@ -594,9 +606,12 @@ export function DocumentsTab({
                 + Attach images
               </Button>
             </Box>
-            <Box display="flex" justifyContent="center">
-              <Button onClick={() => {data?.data[0]?.name && !errors['_D_1_'] && data?.data[0]?.attachments?.find((atc) => atc.file_name.startsWith('_D_1_')) ? navigate(`/submit?docname=${data?.data[0]?.name}`) : console.error("no doc")}} type="submit" color="white" bg="black">
-                Confirm
+            <Box display="flex" gap="4" justifyContent="center">
+              <Button type="submit" color="white" bg="black">
+                Save
+              </Button>
+              <Button onClick={() => { if(status?.documents) navigate(`/submit?type=${'with_po'}&docname=${data?.data[0]?.name}`)}} type="button" borderColor="black" color="black" bg="white">
+                Next
               </Button>
             </Box>
           </VStack>
