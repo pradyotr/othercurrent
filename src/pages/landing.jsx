@@ -16,7 +16,7 @@ export default function Landing() {
                     <NavLink to={type === 'in' ? "/orders/in" : "/orders/out" }>{ type === 'in' ? "With PO" : "Invoice"}</NavLink>
                 </Button>
                 <Button size="lg" w="44" asChild bg="gray.800" color="white">
-                    <NavLink to={ type === 'in' ? "/in" : ""}>{ type === 'in' ? "Without PO" : "Delivery Challan"}</NavLink>
+                    <NavLink to={ type === 'in' ? "/without_po" : ""}>{ type === 'in' ? "Without PO" : "Delivery Challan"}</NavLink>
                 </Button>
                 <Button size="lg" w="44" asChild bg="gray.800" color="white">
                     <NavLink to="/orders/out">Stock Transfer</NavLink>

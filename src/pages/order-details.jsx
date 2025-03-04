@@ -274,32 +274,6 @@ export default function OrderDetails() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      {/* <Tabs.Root
-        w="100vw"
-        value={activeTab}
-        onValueChange={(e) => setActiveTab(e.value)}
-        position="absolute"
-        bottom="0"
-        fitted
-        defaultValue="Party Details"
-        variant="enclosed"
-      >
-        <Tabs.List>
-          <Tabs.Trigger value="party_details" bgColor={tabStatus?.party_details ?"green.400": "yellow.300"}>
-            <HiPencilAlt size={25} color={tabStatus?.party_details ?"green":"brown"} />
-          </Tabs.Trigger>
-          <Tabs.Trigger value="items" bgColor={tabStatus?.items ?"green.400": tabStatus.party_details? "yellow.300": "gray.300"} disabled={!tabStatus?.party_details}>
-            <HiClipboardList size={25} color={tabStatus?.items ?"green":tabStatus.party_details? "brown": "gray"} />
-          </Tabs.Trigger>
-          <Tabs.Trigger value="images" bgColor={tabStatus?.images ?"green.400": tabStatus.items? "yellow.300": "gray.300"} disabled={!tabStatus?.items}>
-            <HiCamera size={25} color={tabStatus?.images ?"green":tabStatus.items? "brown": "gray"} />
-          </Tabs.Trigger>
-          <Tabs.Trigger value="documents" bgColor={tabStatus?.documents ?"green.400": tabStatus.images? "yellow.300": "gray.300"} disabled={!tabStatus?.images}>
-            <HiFolderAdd size={25} color={tabStatus?.documents ?"green":tabStatus.images? "brown": "gray"} />
-          </Tabs.Trigger>
-          <Tabs.Indicator rounded="l2" />
-        </Tabs.List>
-      </Tabs.Root> */}
     </Box>
   )
 }

@@ -9,7 +9,7 @@ const useFetch = (
 ) => {
   const fetcher = (url) => fetch(url).then((res) => res.json())
   const { data, error, isLoading } = useSWR(
-    `${BASE_URL}/resource/${doctype}?fields=${JSON.stringify(fields)}${filters ? `&filters=${JSON.stringify(filters)}` : ``}&order_by=${order_by}`,
+    `${BASE_URL}/resource/${doctype}?fields=${JSON.stringify(fields)}${filters ? `&filters=${JSON.stringify(filters)}` : ``}&order_by=${order_by}&limit_page_length=None`,
     fetcher
   )
   return { fetchedData: data, fetchError: error, isLoading }

@@ -29,6 +29,8 @@ import { isEmpty } from 'lodash'
 import useSWR from 'swr'
 import { NavLink, useNavigate, useSearchParams } from 'react-router'
 import { HiCamera, HiCheckCircle, HiExclamationCircle } from 'react-icons/hi'
+import { ImagesForm, InputForm } from './common'
+import { IMAGES_FORM, INPUT_FORM } from '../constants/form-metadata'
 
 export default function PartyDetailsTab({
   type,
@@ -49,6 +51,14 @@ export default function PartyDetailsTab({
     getValues,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm()
+  const fields = INPUT_FORM.WITH_PO
+  fields.map((field, i) => {
+    if (data && data.data.length && data?.data[0][field.fieldname]) {
+      field['default'] = data?.data[0][field.fieldname]
+    } else {
+      if(field.fieldname === 'supplier') field['default'] = fetchedData.data?.supplier
+    }
+  })
   return (
     <Box h="600px" overflow="auto">
       <FormStatusAlert
@@ -80,88 +90,14 @@ export default function PartyDetailsTab({
                   : fetchedData.data?.posting_date}
               </Text>
             </HStack>
-            <Field.Root>
-              <Field.Label>
-                {type == 'in' ? 'Supplier' : 'Customer'}
-              </Field.Label>
-              <Input
-                {...register(type == 'in' ? 'supplier' : 'customer', { required: true })}
-                disabled
-                defaultValue={
-                  type == 'in'
-                    ? fetchedData.data?.supplier
-                    : fetchedData.data?.customer
-                }
-              />
-              {errors?.supplier || errors?.customer && (<Field.ErrorText>This field is required</Field.ErrorText>)}
-            </Field.Root>
-            {type === 'out' ? <Field.Root>
-              <Field.Label>
-                {type == 'in' ? 'Supplier' : 'Customer'} Address
-              </Field.Label>
-              <Textarea
-                {...register(
-                  type == 'in' ? 'supplier_address' : 'customer_address'
-                )}
-                disabled
-                autoresize
-                maxH="10lh"
-                defaultValue={
-                  type == 'in'
-                    ? String(
-                      fetchedData.data?.billing_address_display
-                    ).replaceAll('<br>', '\n')
-                    : String(fetchedData.data?.address_display).replaceAll(
-                      '<br>',
-                      '\n'
-                    )
-                }
-              />
-            </Field.Root> : <></>}
-            <Field.Root invalid={errors?.supplier_invoice_no || errors?.invoice_no}>
-              <Field.Label>
-                {type == 'in' ? 'Supplier' : ''} Invoice No.
-              </Field.Label>
-              <Input
-                {...register(
-                  type == 'in' ? 'supplier_invoice_no' : 'invoice_no',
-                  { required: true }
-                )}
-                defaultValue={
-                  type == 'out'
-                    ? fetchedData.data?.name
-                    : data?.data[0]?.supplier_invoice_no || ''
-                }
-                placeholder="Enter input here"
-              />
-              {(errors?.supplier_invoice_no || errors?.invoice_no) && <Field.ErrorText>This field is required</Field.ErrorText>}
-            </Field.Root>
-            <Field.Root invalid={errors?.supplier_invoice_date || errors?.invoice_date}>
-              <Field.Label>
-                {type == 'in' ? 'Supplier' : ''} Invoice Date
-              </Field.Label>
-              <Input
-                {...register(
-                  type == 'in' ? 'supplier_invoice_date' : 'invoice_date',
-                  { required: true }
-                )}
-                defaultValue={
-                  type == 'out'
-                    ? fetchedData.data?.posting_date
-                    : data?.data[0]?.supplier_invoice_date || ''
-                }
-                type="date"
-              />
-              {(errors?.supplier_invoice_date || errors?.invoice_date) && <Field.ErrorText>This field is required</Field.ErrorText>}
-            </Field.Root>
-            <Box display="flex" gap="4" justifyContent="center">
-              <Button type="submit" color="white" bg="black">
-                Save
-              </Button>
-              <Button onClick={() => { if(status?.party_details) setActiveTab('items')}} type="button" borderColor="black" color="black" bg="white">
-                Next
-              </Button>
-            </Box>
+            <InputForm
+              fields={INPUT_FORM.WITH_PO}
+              register={register}
+              errors={errors}
+              status={Boolean(status?.party_details)}
+              setActiveTab={setActiveTab}
+              nextTab="items"
+            />
           </VStack>
         </form>
       </Box>
@@ -351,6 +287,12 @@ export function ImagesTab({
       file.file_name.startsWith('_I_')
     ) || []
   const img_url = String(BASE_URL).slice(0, String(BASE_URL).length - 4)
+  const fields = IMAGES_FORM.WITH_PO
+  fields.map((field, i) => {
+    if (data && data.data.length && data?.data[0][field.fieldname]) {
+      field['default'] = data?.data[0][field.fieldname]
+    }
+  })
 
   return (
     <Box h="600px" overflow="auto">
@@ -365,7 +307,16 @@ export function ImagesTab({
         <form onSubmit={handleSubmit((data) => postData(data, 'I'))}>
           <VStack overflow="auto" gap="6" align="center">
             <Heading size="xl">Capture Image</Heading>
-            <Field.Root orientation="horizontal">
+            <ImagesForm
+              fields={IMAGES_FORM.WITH_PO}
+              register={register}
+              errors={errors}
+              files={files}
+              status={Boolean(status?.images)}
+              setActiveTab={setActiveTab}
+              nextTab="documents"
+            />
+            {/* <Field.Root orientation="horizontal">
               <Field.Label>Image of Vehicle</Field.Label>
               {data && data.data.length && data.data[0].vehicle_image ? (
                 <NavLink
@@ -483,7 +434,7 @@ export function ImagesTab({
               <Button onClick={() => { if(status?.images) setActiveTab('documents')}} type="button" borderColor="black" color="black" bg="white">
                 Next
               </Button>
-            </Box>
+            </Box> */}
           </VStack>
         </form>
       </Box>
@@ -513,7 +464,6 @@ export function DocumentsTab({
     watch,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm()
-  console.log(data.data[0].attachments)
   return (
     <Box h="600px">
       <FormStatusAlert
@@ -621,7 +571,7 @@ export function DocumentsTab({
   )
 }
 
-function FormStatusAlert({
+export function FormStatusAlert({
   isSubmitting,
   isSubmitSuccessful,
   showAlert,
