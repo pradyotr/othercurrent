@@ -1,0 +1,119 @@
+import { useState, useEffect, createContext, useContext } from "react";
+import { BASE_URL } from "../constants/app-constants";
+
+const AuthContext = createContext(null);
+
+export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState({});
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      if (token) {
+        setIsAuthenticated(true);
+        const logged_user = await fetchUserData(token);
+        const response = await fetch(
+          `${BASE_URL}/api/resource/User/${logged_user}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        const userData = await response.json();
+        setUser({
+          username: logged_user,
+          roles: userData.data.roles.map((field) => field.role),
+        });
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      logout();
+    }
+  };
+
+  const fetchUserData = async (token) => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/api/method/frappe.auth.get_logged_user`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const userData = await response.json();
+      return userData.message;
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      logout();
+    }
+  };
+
+  const login = async (username, password) => {
+    const params = new URLSearchParams({
+      grant_type: "password",
+      client_id: import.meta.env.VITE_CLIENT_ID,
+      client_secret: import.meta.env.VITE_CLIENT_SECRET,
+      username,
+      password,
+      scope: "all openid",
+    });
+
+    try {
+      const response = await fetch(
+        `${BASE_URL}/api/method/frappe.integrations.oauth2.get_token`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: params,
+        },
+      );
+
+      const data = await response.json();
+      if (data.access_token) {
+        localStorage.setItem("token", data.access_token);
+        setIsAuthenticated(true);
+        await fetchUserData(data.access_token);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Login failed:", error);
+      return false;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{ isAuthenticated, user, loading, login, logout }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
