@@ -17,11 +17,10 @@ function Login() {
   }, [isAuthenticated]);
 
   return (
-    <>
+    <Box w="100vw" h="100vh">
       <Box
         position="absolute"
         top="0"
-        w="full"
         py="2"
         px="8"
         bg="white"
@@ -31,7 +30,6 @@ function Login() {
       </Box>
       <Box
         h={{ base: "4/5" }}
-        w="100vw"
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -78,7 +76,7 @@ function Login() {
           </VStack>
         </Box>
       </Box>
-    </>
+    </Box>
   );
 }
 
