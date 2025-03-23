@@ -7,5 +7,6 @@ export default function Home() {
   if (!isAuthenticated) {
     navigate("/login");
   }
+  navigate('/testing')
   return <></>;
 }
