@@ -6,6 +6,9 @@ import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
 import { debounce } from 'lodash'
 import { BiSolidDownArrow, BiSolidUpArrow } from 'react-icons/bi';
+import { FormSection } from '../components/ui/app-common';
+import { FORM } from '../constants/metadata';
+import { useForm } from 'react-hook-form';
 
 export default function TestingPage() {
 
@@ -13,6 +16,7 @@ export default function TestingPage() {
     const { isAuthenticated } = useAuth();
     const [sortOrder, setSortOrder] = useState(true)
     const { data, error, isLoading } = useGetData('Quality Inspection', undefined, undefined, undefined, sortOrder)
+    const { register, getValues, watch } = useForm()
 
     const [filteredData, setFilteredData] = useState([])
     const [searchString, setSearchString] = useState('')
@@ -132,6 +136,12 @@ export default function TestingPage() {
                     </Table.Root>
                 </Stack>
             </Box>
+            <FormSection 
+                fields={FORM.TESTING.init}
+                register={register}
+                getValues={getValues}
+                watch={watch}
+            />
         </Box>
     )
 }
