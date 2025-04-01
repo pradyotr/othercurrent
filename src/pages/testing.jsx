@@ -136,12 +136,8 @@ export default function TestingPage() {
                     </Table.Root>
                 </Stack>
             </Box>
-            <FormSection 
-                fields={FORM.TESTING.init}
-                register={register}
-                getValues={getValues}
-                watch={watch}
-            />
+            
+
         </Box>
     )
 }
